@@ -7,8 +7,8 @@ import (
 
 type Statement interface {
 	Accept(visitor Visitor) any
+	String() string
 }
-
 
 type BlockStatement struct {
 	Statements []Statement
@@ -16,6 +16,10 @@ type BlockStatement struct {
 
 func (blockStatement BlockStatement) Accept(visitor Visitor) any {
 	return visitor.VisitBlockStatement(blockStatement)
+}
+
+func (blockStatement BlockStatement) String() string {
+	return ""
 }
 
 type ClassStatement struct {
@@ -28,12 +32,20 @@ func (classStatement ClassStatement) Accept(visitor Visitor) any {
 	return visitor.VisitClassStatement(classStatement)
 }
 
+func (classStatement ClassStatement) String() string {
+	return ""
+}
+
 type ExpressionStatement struct {
 	Expression expression.Expression
 }
 
 func (expressionStatement ExpressionStatement) Accept(visitor Visitor) any {
 	return visitor.VisitExpressionStatement(expressionStatement)
+}
+
+func (expressionStatement ExpressionStatement) String() string {
+	return ""
 }
 
 type FunctionStatement struct {
@@ -46,6 +58,10 @@ func (functionStatement FunctionStatement) Accept(visitor Visitor) any {
 	return visitor.VisitFunctionStatement(functionStatement)
 }
 
+func (functionStatement FunctionStatement) String() string {
+	return ""
+}
+
 type IfStatement struct {
 	Condition  expression.Expression
 	ThenBranch Statement
@@ -54,6 +70,10 @@ type IfStatement struct {
 
 func (ifStatement IfStatement) Accept(visitor Visitor) any {
 	return visitor.VisitIfStatement(ifStatement)
+}
+
+func (ifStatement IfStatement) String() string {
+	return ""
 }
 
 type PrintStatement struct {
@@ -65,6 +85,10 @@ func (printStatement PrintStatement) Accept(visitor Visitor) any {
 	return visitor.VisitPrintStatement(printStatement)
 }
 
+func (printStatement PrintStatement) String() string {
+	return ""
+}
+
 type ReturnStatement struct {
 	Keyword *token.Token
 	Value   expression.Expression
@@ -72,6 +96,10 @@ type ReturnStatement struct {
 
 func (returnStatement ReturnStatement) Accept(visitor Visitor) any {
 	return visitor.VisitReturnStatement(returnStatement)
+}
+
+func (returnStatement ReturnStatement) String() string {
+	return ""
 }
 
 type VariableStatement struct {
@@ -83,6 +111,10 @@ func (variableStatement VariableStatement) Accept(visitor Visitor) any {
 	return visitor.VisitVariableStatement(variableStatement)
 }
 
+func (variableStatement VariableStatement) String() string {
+	return ""
+}
+
 type WhileStatement struct {
 	Condition expression.Expression
 	Body      Statement
@@ -90,6 +122,10 @@ type WhileStatement struct {
 
 func (whileStatement WhileStatement) Accept(visitor Visitor) any {
 	return visitor.VisitWhileStatement(whileStatement)
+}
+
+func (whileStatement WhileStatement) String() string {
+	return ""
 }
 
 type Visitor interface {
@@ -103,4 +139,3 @@ type Visitor interface {
 	VisitVariableStatement(statement VariableStatement) any
 	VisitWhileStatement(statement WhileStatement) any
 }
-

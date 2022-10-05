@@ -3,46 +3,42 @@ package main
 import (
 	"bufio"
 	"fmt"
-	environment2 "github.com/nusr/gojs/environment"
-	"github.com/nusr/gojs/global"
-	interpreter2 "github.com/nusr/gojs/interpreter"
-	parser2 "github.com/nusr/gojs/parser"
-	scanner2 "github.com/nusr/gojs/scanner"
 	"io/ioutil"
 	"os"
 	"time"
+
+	"github.com/nusr/gojs/environment"
+	"github.com/nusr/gojs/global"
+	"github.com/nusr/gojs/interpreter"
+	"github.com/nusr/gojs/parser"
+	"github.com/nusr/gojs/scanner"
 )
 
-func interpret(source string, environment *environment2.Environment) {
-	scanner := scanner2.NewScanner(source)
-	tokens := scanner.ScanTokens()
+func interpret(source string, environment *environment.Environment) any {
+	s := scanner.NewScanner(source)
+	tokens := s.ScanTokens()
 
-	parser := parser2.NewParser(tokens)
-	statements := parser.Parse()
+	p := parser.NewParser(tokens)
+	statements := p.Parse()
 
 	environment.Define("clock", global.Clock(time.Now().UnixMilli()))
 
-	interpreter := interpreter2.NewInterpreter(environment)
-	interpreter.Interpret(statements)
-
-	scanner = nil
-	parser = nil
-	interpreter = nil
+	i := interpreter.NewInterpreter(environment)
+	return i.Interpret(statements)
 }
 
 func reply() {
 	input := bufio.NewScanner(os.Stdin)
 	fmt.Print("> ")
-	environment := environment2.NewEnvironment(nil)
+	env := environment.NewEnvironment(nil)
 	for input.Scan() {
 		line := input.Text()
 		if line == ".exit" {
 			break
 		}
-		interpret(line, environment)
+		interpret(line, env)
 		fmt.Print("> ")
 	}
-	environment = nil
 }
 
 func runFile(fileName string) {
@@ -51,12 +47,8 @@ func runFile(fileName string) {
 		fmt.Printf("can not open file \"%s\", error: %v", fileName, err)
 		return
 	}
-	environment := environment2.NewEnvironment(nil)
-	interpret(string(content), environment)
-	environment = nil
+	interpret(string(content), environment.NewEnvironment(nil))
 }
-
-var filePaths []string
 
 func main() {
 	argc := len(os.Args)

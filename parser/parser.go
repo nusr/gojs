@@ -97,14 +97,14 @@ func (parser *Parser) primary() expression.Expression {
 	if parser.match(token.FLOAT64, token.INT64) {
 		t := parser.previous()
 		return expression.LiteralExpression{
-			String:    t.Lexeme,
+			Value:     t.Lexeme,
 			TokenType: t.TokenType,
 		}
 
 	}
 	if parser.match(token.STRING) {
 		return expression.LiteralExpression{
-			String:    parser.previous().Lexeme,
+			Value:     parser.previous().Lexeme,
 			TokenType: token.STRING,
 		}
 	}

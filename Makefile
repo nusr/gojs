@@ -1,0 +1,6 @@
+build:
+		go build
+lint:
+		go vet ./...
+  	go fmt ./...
+  	go mod tidy

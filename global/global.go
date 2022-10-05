@@ -5,7 +5,6 @@ import (
 	"time"
 )
 
-
 type Clock int64
 
 func NewClock(val int64) call.BaseCallable {

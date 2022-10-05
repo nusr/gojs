@@ -7,7 +7,7 @@ import (
 
 	"github.com/nusr/gojs/call"
 	"github.com/nusr/gojs/control_flow"
-	environment2 "github.com/nusr/gojs/environment"
+	"github.com/nusr/gojs/environment"
 	"github.com/nusr/gojs/expression"
 	"github.com/nusr/gojs/statement"
 	"github.com/nusr/gojs/token"
@@ -76,17 +76,17 @@ func convertLtoF(left any, right any) (float64, float64, bool) {
 }
 
 type Interpreter struct {
-	environment *environment2.Environment
-	globals     *environment2.Environment
+	environment *environment.Environment
+	globals     *environment.Environment
 }
 
-func NewInterpreter(environment *environment2.Environment) *Interpreter {
+func NewInterpreter(environment *environment.Environment) *Interpreter {
 	return &Interpreter{
 		environment: environment,
 		globals:     environment,
 	}
 }
-func (interpreter *Interpreter) GetGlobal() *environment2.Environment {
+func (interpreter *Interpreter) GetGlobal() *environment.Environment {
 	return interpreter.globals
 }
 func (interpreter *Interpreter) Interpret(list []statement.Statement) any {
@@ -139,7 +139,7 @@ func (interpreter *Interpreter) isTruth(value any) bool {
 	return result
 }
 
-func (interpreter *Interpreter) ExecuteBlock(statement statement.BlockStatement, environment *environment2.Environment) (result any) {
+func (interpreter *Interpreter) ExecuteBlock(statement statement.BlockStatement, environment *environment.Environment) (result any) {
 	previous := interpreter.environment
 	interpreter.environment = environment
 	for _, t := range statement.Statements {
@@ -166,7 +166,7 @@ func (interpreter *Interpreter) VisitVariableStatement(statement statement.Varia
 	return nil
 }
 func (interpreter *Interpreter) VisitBlockStatement(statement statement.BlockStatement) any {
-	return interpreter.ExecuteBlock(statement, environment2.NewEnvironment(interpreter.environment))
+	return interpreter.ExecuteBlock(statement, environment.NewEnvironment(interpreter.environment))
 }
 func (interpreter *Interpreter) VisitClassStatement(statement statement.ClassStatement) any {
 	// TODO
@@ -210,7 +210,7 @@ func (interpreter *Interpreter) VisitWhileStatement(statement statement.WhileSta
 }
 
 func (interpreter *Interpreter) VisitVariableExpression(expression expression.VariableExpression) any {
-	return interpreter.environment.Get(expression.Name)
+	return interpreter.environment.Get(expression.Name.Lexeme)
 }
 func (interpreter *Interpreter) VisitLiteralExpression(expression expression.LiteralExpression) any {
 	switch expression.TokenType {
@@ -220,13 +220,13 @@ func (interpreter *Interpreter) VisitLiteralExpression(expression expression.Lit
 		return expression.String
 	case token.FLOAT64:
 		{
-			result, _ := strconv.ParseFloat(expression.String, 64)
+			result, _ := strconv.ParseFloat(expression.Value, 64)
 
 			return result
 		}
 	case token.INT64:
 		{
-			result, _ := strconv.ParseInt(expression.String, 10, 64)
+			result, _ := strconv.ParseInt(expression.Value, 10, 64)
 			return result
 		}
 	case token.TRUE:
@@ -424,44 +424,40 @@ func (interpreter *Interpreter) VisitUnaryExpression(expression expression.Unary
 	switch expression.Operator.TokenType {
 	case token.PlusPlus:
 		{
-			if val, check := expression.Right.(expression.VariableExpression); check {
-				var temp any
-				if val, check := result.(int64); check {
-					temp = val + 1
-				} else {
-					a, _, check := convertLtoF(result, 0)
-					if check {
-						temp = a + 1
-					} else {
-						panic(any("error type"))
-					}
-				}
-				interpreter.environment.Assign(val.Name, temp)
-				return temp
+
+			var temp any
+
+			if val, check := result.(int64); check {
+				temp = val + 1
 			} else {
-				panic(any("Invalid left-hand side expression in prefix operation"))
+				a, _, check := convertLtoF(result, 0)
+				if check {
+					temp = a + 1
+				} else {
+					panic(any("error type"))
+				}
 			}
+			interpreter.environment.Assign(expression.Right.String(), temp)
+			return temp
 
 		}
 
 	case token.MinusMinus:
 		{
-			if val, check := expression.Right.(expression.VariableExpression); check {
-				var temp any
-				if val, check := result.(int64); check {
-					temp = val - 1
+			var temp any
+			if val, check := result.(int64); check {
+				temp = val - 1
+			} else {
+				a, _, check := convertLtoF(result, 0)
+				if check {
+					temp = a - 1
 				} else {
-					a, _, check := convertLtoF(result, 0)
-					if check {
-						temp = a - 1
-					} else {
-						panic(any("error type"))
-					}
+					panic(any("error type"))
 				}
-				interpreter.environment.Assign(val.Name, temp)
-				return temp
 			}
-			panic(any("Invalid left-hand side expression in prefix operation"))
+			interpreter.environment.Assign(expression.Right.String(), temp)
+			return temp
+
 		}
 	case token.PLUS:
 		return result
@@ -486,6 +482,6 @@ func (interpreter *Interpreter) VisitUnaryExpression(expression expression.Unary
 
 func (interpreter *Interpreter) VisitAssignExpression(expression expression.AssignExpression) any {
 	temp := interpreter.evaluate(expression.Value)
-	interpreter.environment.Assign(expression.Name, temp)
+	interpreter.environment.Assign(expression.Name.Lexeme, temp)
 	return temp
 }

@@ -2,7 +2,6 @@ package environment
 
 import (
 	"fmt"
-	"github.com/nusr/gojs/token"
 )
 
 type Environment struct {
@@ -18,27 +17,27 @@ func NewEnvironment(parent *Environment) *Environment {
 	}
 }
 
-func (environment *Environment) Get(name *token.Token) any {
-	if val, ok := environment.values[name.Lexeme]; ok {
+func (environment *Environment) Get(key string) any {
+	if val, ok := environment.values[key]; ok {
 		return val
 	}
 	if environment.parent != nil {
-		return environment.parent.Get(name)
+		return environment.parent.Get(key)
 	}
-	panic(any(fmt.Sprintf("%s is not defined", name.Lexeme)))
+	panic(any(fmt.Sprintf("%s is not defined", key)))
 }
 func (environment *Environment) Define(name string, value any) {
 	environment.values[name] = value
 }
 
-func (environment *Environment) Assign(name *token.Token, value any) {
-	if _, ok := environment.values[name.Lexeme]; ok {
-		environment.Define(name.Lexeme, value)
+func (environment *Environment) Assign(key string, value any) {
+	if _, ok := environment.values[key]; ok {
+		environment.Define(key, value)
 		return
 	}
 	if environment.parent != nil {
-		environment.parent.Assign(name, value)
+		environment.parent.Assign(key, value)
 		return
 	}
-	panic(any(fmt.Sprintf("%s is not defined", name.Lexeme)))
+	panic(any(fmt.Sprintf("%s is not defined", key)))
 }
