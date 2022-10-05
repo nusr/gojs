@@ -1,7 +1,8 @@
-package main
+package scanner
 
 import (
 	"fmt"
+	"github.com/nusr/gojs/token"
 	"strings"
 )
 
@@ -9,34 +10,34 @@ const (
 	EmptyData = 0
 )
 
-var KeywordMap = map[string]TokenType{
-	"class":  CLASS,
-	"else":   ELSE,
-	"false":  FALSE,
-	"for":    FOR,
-	"fun":    FUNCTION,
-	"if":     IF,
-	"null":   NULL,
-	"print":  PRINT,
-	"return": RETURN,
-	"super":  SUPER,
-	"this":   THIS,
-	"true":   TRUE,
-	"var":    VAR,
-	"while":  WHILE,
-	"do":     DO,
+var KeywordMap = map[string]token.Type{
+	"call":         token.CLASS,
+	"else":         token.ELSE,
+	"false":        token.FALSE,
+	"for":          token.FOR,
+	"fun":          token.FUNCTION,
+	"if":           token.IF,
+	"null":         token.NULL,
+	"print":        token.PRINT,
+	"control_flow": token.RETURN,
+	"super":        token.SUPER,
+	"this":         token.THIS,
+	"true":         token.TRUE,
+	"var":          token.VAR,
+	"while":        token.WHILE,
+	"do":           token.DO,
 }
 
 type Scanner struct {
 	source  []rune
-	tokens  []*Token
+	tokens  []*token.Token
 	start   int
 	current int
 	line    int
 }
 
 func NewScanner(source string) *Scanner {
-	var tokens []*Token
+	var tokens []*token.Token
 	return &Scanner{
 		source:  []rune(source),
 		tokens:  tokens,
@@ -75,20 +76,20 @@ func (scanner *Scanner) getSubString(start int, end int) string {
 	return text
 }
 
-func (scanner *Scanner) addOneToken(tokenType TokenType) {
+func (scanner *Scanner) addOneToken(tokenType token.Type) {
 	text := scanner.getSubString(scanner.start, scanner.current)
 	scanner.appendToken(tokenType, text)
 }
 
-func (scanner *Scanner) appendToken(tokenType TokenType, text string) {
-	scanner.tokens = append(scanner.tokens, &Token{
-		tokenType: tokenType,
-		lexeme:    text,
-		line:      scanner.line,
+func (scanner *Scanner) appendToken(tokenType token.Type, text string) {
+	scanner.tokens = append(scanner.tokens, &token.Token{
+		TokenType: tokenType,
+		Lexeme:    text,
+		Line:      scanner.line,
 	})
 }
 
-func (scanner *Scanner) addToken(tokenType TokenType) {
+func (scanner *Scanner) addToken(tokenType token.Type) {
 	scanner.addOneToken(tokenType)
 }
 func (scanner *Scanner) match(char rune) bool {
@@ -119,9 +120,9 @@ func (scanner *Scanner) number() {
 		for scanner.isDigit(scanner.peek()) {
 			scanner.advance()
 		}
-		scanner.addToken(FLOAT64)
+		scanner.addToken(token.FLOAT64)
 	} else {
-		scanner.addToken(INT64)
+		scanner.addToken(token.INT64)
 	}
 
 }
@@ -139,7 +140,7 @@ func (scanner *Scanner) string(end rune) {
 	}
 	scanner.advance() // skip "
 	text := scanner.getSubString(scanner.start+1, scanner.current-1)
-	scanner.appendToken(STRING, text)
+	scanner.appendToken(token.STRING, text)
 }
 
 func (scanner *Scanner) identifier() {
@@ -147,7 +148,7 @@ func (scanner *Scanner) identifier() {
 		scanner.advance()
 	}
 	text := scanner.getSubString(scanner.start, scanner.current)
-	tokenType := IDENTIFIER
+	tokenType := token.IDENTIFIER
 	if val, ok := KeywordMap[text]; ok {
 		tokenType = val
 	}
@@ -158,78 +159,78 @@ func (scanner *Scanner) scanToken() {
 	c := scanner.advance()
 	switch c {
 	case '(':
-		scanner.addToken(LeftParen)
+		scanner.addToken(token.LeftParen)
 	case ')':
-		scanner.addToken(RightParen)
+		scanner.addToken(token.RightParen)
 	case '{':
-		scanner.addToken(LeftBrace)
+		scanner.addToken(token.LeftBrace)
 	case '}':
-		scanner.addToken(RightBrace)
+		scanner.addToken(token.RightBrace)
 	case '[':
-		scanner.addToken(LeftSquare)
+		scanner.addToken(token.LeftSquare)
 	case ']':
-		scanner.addToken(RightSquare)
+		scanner.addToken(token.RightSquare)
 	case ',':
-		scanner.addToken(COMMA)
+		scanner.addToken(token.COMMA)
 	case '.':
-		scanner.addToken(DOT)
+		scanner.addToken(token.DOT)
 	case '-':
 		if scanner.match('-') {
-			scanner.addToken(MinusMinus)
+			scanner.addToken(token.MinusMinus)
 		} else {
-			scanner.addToken(MINUS)
+			scanner.addToken(token.MINUS)
 		}
 	case '+':
 		if scanner.match('+') {
-			scanner.addToken(PlusPlus)
+			scanner.addToken(token.PlusPlus)
 		} else {
-			scanner.addToken(PLUS)
+			scanner.addToken(token.PLUS)
 		}
 	case ';':
-		scanner.addToken(SEMICOLON)
+		scanner.addToken(token.SEMICOLON)
 	case ':':
-		scanner.addToken(COLON)
+		scanner.addToken(token.COLON)
 	case '%':
-		scanner.addToken(PERCENT)
+		scanner.addToken(token.PERCENT)
 	case '?':
-		scanner.addToken(MARK)
+		scanner.addToken(token.MARK)
 	case '&':
 		if scanner.match('&') {
-			scanner.addToken(AND)
+			scanner.addToken(token.AND)
 		} else {
-			scanner.addToken(BitAnd)
+			scanner.addToken(token.BitAnd)
 		}
 	case '|':
 		if scanner.match('|') {
-			scanner.addToken(OR)
+			scanner.addToken(token.OR)
 		} else {
-			scanner.addToken(BitOr)
+			scanner.addToken(token.BitOr)
 		}
 	case '*':
-		scanner.addToken(STAR)
+		scanner.addToken(token.STAR)
 	case '!':
 		if scanner.match('=') {
-			scanner.addToken(BangEqual)
+			scanner.addToken(token.BangEqual)
 		} else {
-			scanner.addToken(BANG)
+			scanner.addToken(token.BANG)
 		}
 	case '=':
 		if scanner.match('=') {
-			scanner.addToken(EqualEqual)
+			scanner.addToken(token.EqualEqual)
 		} else {
-			scanner.addToken(EQUAL)
+			scanner.addToken(token.EQUAL)
 		}
 	case '>':
 		if scanner.match('=') {
-			scanner.addToken(GreaterEqual)
+			scanner.addToken(token.GreaterEqual)
 		} else {
-			scanner.addToken(GREATER)
+			scanner.addToken(token.GREATER)
 		}
 	case '<':
 		if scanner.match('=') {
-			scanner.addToken(LessEqual)
+			scanner.addToken(token.LessEqual)
 		} else {
-			scanner.addToken(LESS)
+			scanner.addToken(token.LESS)
 		}
 	case '/':
 		if scanner.match('/') {
@@ -238,7 +239,7 @@ func (scanner *Scanner) scanToken() {
 			}
 			text := scanner.getSubString(scanner.start, scanner.current)
 			if strings.Contains(text, "expect:") {
-				scanner.appendToken(LineComment, text)
+				scanner.appendToken(token.LineComment, text)
 			}
 		} else if scanner.match('*') {
 			for !((scanner.peek() == '*' && scanner.peekNext() == '/') || scanner.isAtEnd()) {
@@ -247,7 +248,7 @@ func (scanner *Scanner) scanToken() {
 			scanner.advance() // skip *
 			scanner.advance() // skip /
 		} else {
-			scanner.addToken(SLASH)
+			scanner.addToken(token.SLASH)
 		}
 	case ' ':
 	case '\r':
@@ -269,11 +270,11 @@ func (scanner *Scanner) scanToken() {
 	}
 }
 
-func (scanner *Scanner) ScanTokens() []*Token {
+func (scanner *Scanner) ScanTokens() []*token.Token {
 	for !scanner.isAtEnd() {
 		scanner.start = scanner.current
 		scanner.scanToken()
 	}
-	scanner.appendToken(EOF, "")
+	scanner.appendToken(token.EOF, "")
 	return scanner.tokens
 }
