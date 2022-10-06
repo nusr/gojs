@@ -1,12 +1,13 @@
 package statement
 
 import (
-	"github.com/nusr/gojs/expression"
+	"strings"
+
 	"github.com/nusr/gojs/token"
 )
 
 type Statement interface {
-	Accept(visitor Visitor) any
+	Accept(visitor StatementVisitor) any
 	String() string
 }
 
@@ -14,38 +15,47 @@ type BlockStatement struct {
 	Statements []Statement
 }
 
-func (blockStatement BlockStatement) Accept(visitor Visitor) any {
-	return visitor.VisitBlockStatement(blockStatement)
+func (statement BlockStatement) Accept(visitor StatementVisitor) any {
+	return visitor.VisitBlockStatement(statement)
 }
 
-func (blockStatement BlockStatement) String() string {
-	return ""
+func (statement BlockStatement) String() string {
+	var temp []string
+	for _, item := range statement.Statements {
+		temp = append(temp, item.String())
+	}
+	return "{" + strings.Join(temp, ";") + "}"
 }
 
 type ClassStatement struct {
 	Name       token.Token
-	SuperClass expression.VariableExpression
-	Methods    []FunctionStatement
+	SuperClass VariableExpression
+	Methods    []Statement
 }
 
-func (classStatement ClassStatement) Accept(visitor Visitor) any {
-	return visitor.VisitClassStatement(classStatement)
+func (statement ClassStatement) Accept(visitor StatementVisitor) any {
+	return visitor.VisitClassStatement(statement)
 }
 
-func (classStatement ClassStatement) String() string {
-	return ""
+func (statement ClassStatement) String() string {
+	var temp []string
+	for _, item := range statement.Methods {
+		temp = append(temp, item.String())
+	}
+
+	return "class " + statement.Name.String() + "{" + strings.Join(temp, "") + "}"
 }
 
 type ExpressionStatement struct {
-	Expression expression.Expression
+	Expression Expression
 }
 
-func (expressionStatement ExpressionStatement) Accept(visitor Visitor) any {
-	return visitor.VisitExpressionStatement(expressionStatement)
+func (statement ExpressionStatement) Accept(visitor StatementVisitor) any {
+	return visitor.VisitExpressionStatement(statement)
 }
 
-func (expressionStatement ExpressionStatement) String() string {
-	return ""
+func (statement ExpressionStatement) String() string {
+	return statement.Expression.String() + ";"
 }
 
 type FunctionStatement struct {
@@ -54,80 +64,95 @@ type FunctionStatement struct {
 	Params []token.Token
 }
 
-func (functionStatement FunctionStatement) Accept(visitor Visitor) any {
-	return visitor.VisitFunctionStatement(functionStatement)
+func (statement FunctionStatement) Accept(visitor StatementVisitor) any {
+	return visitor.VisitFunctionStatement(statement)
 }
 
-func (functionStatement FunctionStatement) String() string {
-	return ""
+func (statement FunctionStatement) String() string {
+	var temp []string
+	for _, item := range statement.Params {
+		temp = append(temp, item.String())
+	}
+
+	return "function " + statement.Name.String() + "(" + strings.Join(temp, ",") + "){" + statement.Body.String() + "}"
 }
 
 type IfStatement struct {
-	Condition  expression.Expression
+	Condition  Expression
 	ThenBranch Statement
 	ElseBranch Statement
 }
 
-func (ifStatement IfStatement) Accept(visitor Visitor) any {
-	return visitor.VisitIfStatement(ifStatement)
+func (statement IfStatement) Accept(visitor StatementVisitor) any {
+	return visitor.VisitIfStatement(statement)
 }
 
-func (ifStatement IfStatement) String() string {
-	return ""
+func (statement IfStatement) String() string {
+	temp := "if(" + statement.Condition.String() + ")" + statement.ThenBranch.String()
+	if statement.ElseBranch != nil {
+		temp += "else " + statement.ElseBranch.String()
+	}
+	return temp
 }
 
 type PrintStatement struct {
-	Expression expression.Expression
+	Expression Expression
 }
 
-func (printStatement PrintStatement) Accept(visitor Visitor) any {
-	return visitor.VisitPrintStatement(printStatement)
+func (statement PrintStatement) Accept(visitor StatementVisitor) any {
+	return visitor.VisitPrintStatement(statement)
 }
 
-func (printStatement PrintStatement) String() string {
+func (statement PrintStatement) String() string {
 	return ""
 }
 
 type ReturnStatement struct {
-	Keyword token.Token
-	Value   expression.Expression
+	Value Expression
 }
 
-func (returnStatement ReturnStatement) Accept(visitor Visitor) any {
-	return visitor.VisitReturnStatement(returnStatement)
+func (statement ReturnStatement) Accept(visitor StatementVisitor) any {
+	return visitor.VisitReturnStatement(statement)
 }
 
-func (returnStatement ReturnStatement) String() string {
-	return ""
+func (statement ReturnStatement) String() string {
+	if statement.Value == nil {
+		return "return;"
+	}
+	return "return " + statement.Value.String() + ";"
 }
 
 type VariableStatement struct {
 	Name        token.Token
-	Initializer expression.Expression
+	Initializer Expression
 }
 
-func (variableStatement VariableStatement) Accept(visitor Visitor) any {
-	return visitor.VisitVariableStatement(variableStatement)
+func (statement VariableStatement) Accept(visitor StatementVisitor) any {
+	return visitor.VisitVariableStatement(statement)
 }
 
-func (variableStatement VariableStatement) String() string {
-	return ""
+func (statement VariableStatement) String() string {
+	temp := "var " + statement.Name.String()
+	if statement.Initializer != nil {
+		temp += "=" + statement.Initializer.String()
+	}
+	return temp + ";"
 }
 
 type WhileStatement struct {
-	Condition expression.Expression
+	Condition Expression
 	Body      Statement
 }
 
-func (whileStatement WhileStatement) Accept(visitor Visitor) any {
-	return visitor.VisitWhileStatement(whileStatement)
+func (statement WhileStatement) Accept(visitor StatementVisitor) any {
+	return visitor.VisitWhileStatement(statement)
 }
 
-func (whileStatement WhileStatement) String() string {
-	return ""
+func (statement WhileStatement) String() string {
+	return "while(" + statement.Condition.String() + ")" + statement.Body.String()
 }
 
-type Visitor interface {
+type StatementVisitor interface {
 	VisitBlockStatement(statement BlockStatement) any
 	VisitClassStatement(statement ClassStatement) any
 	VisitExpressionStatement(statement ExpressionStatement) any

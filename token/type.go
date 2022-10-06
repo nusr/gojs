@@ -54,10 +54,11 @@ const (
 	Return
 	Super
 	This
-	Var // variable
-	Do  // do while
-	While
-	EOF // end
+	Var   // variable
+	Do    // do
+	While // while
+	New   // new
+	EOF   // end
 )
 
 func ConvertAnyToString(text any) string {

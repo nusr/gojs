@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"time"
 
+	"github.com/nusr/gojs/call"
 	"github.com/nusr/gojs/environment"
-	"github.com/nusr/gojs/global"
 	"github.com/nusr/gojs/interpreter"
 	"github.com/nusr/gojs/parser"
 	"github.com/nusr/gojs/scanner"
@@ -16,12 +15,10 @@ import (
 
 func interpret(source string, env *environment.Environment) any {
 	s := scanner.New(source)
-	tokens := s.ScanTokens()
+	tokens := s.Scan()
 
 	p := parser.New(tokens)
 	statements := p.Parse()
-
-	env.Define("clock", global.Clock(time.Now().UnixMilli()))
 
 	i := interpreter.New(env)
 	return i.Interpret(statements)
@@ -30,6 +27,7 @@ func interpret(source string, env *environment.Environment) any {
 func RunCommand(in io.Reader, out io.Writer) {
 	input := bufio.NewScanner(in)
 	env := environment.New(nil)
+	call.RegisterGlobal(env)
 	for {
 		fmt.Fprintf(out, "> ")
 		scanned := input.Scan()
@@ -47,5 +45,8 @@ func RunFile(fileName string) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return interpret(string(content), environment.New(nil)), nil
+	env := environment.New(nil)
+	call.RegisterGlobal(env)
+	result := interpret(string(content), env)
+	return result, nil
 }

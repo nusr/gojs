@@ -1,11 +1,40 @@
 package repl
 
 import (
-	"fmt"
 	"testing"
 
+	"github.com/nusr/gojs/call"
 	"github.com/nusr/gojs/environment"
 )
+
+var logData any
+
+type globalFunction struct {
+	name string
+}
+
+func newGlobal(name string) call.Callable {
+	return &globalFunction{
+		name: name,
+	}
+}
+
+func (g *globalFunction) Call(interpreter call.InterpreterMethods, params []any) any {
+	if g.name == "console.log" {
+		logData = params[0]
+	}
+	return nil
+}
+
+func (g *globalFunction) String() string {
+	return ""
+}
+
+func RegisterGlobal(env *environment.Environment) {
+	instance := call.NewInstance()
+	instance.Set("log", newGlobal("console.log"))
+	env.Define("console", instance)
+}
 
 func Test_interpret_primary(t *testing.T) {
 	tests := []struct {
@@ -51,9 +80,31 @@ func Test_interpret_primary(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			//!reflect.DeepEqual(got, tt.want)
-			got := interpret(tt.source, environment.New(nil))
-			fmt.Println(got)
+			env := environment.New(nil)
+			got := interpret(tt.source, env)
+			if got != tt.want {
+				t.Errorf("expect= %v, actual= %v", tt.want, got)
+			}
+		})
+	}
+}
+
+func Test_interpret_array(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		want   any
+	}{
+		{
+			"1",
+			"var a = [1,2];a[0];",
+			int64(1),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			env := environment.New(nil)
+			got := interpret(tt.source, env)
 			if got != tt.want {
 				t.Errorf("expect= %v, actual= %v", tt.want, got)
 			}

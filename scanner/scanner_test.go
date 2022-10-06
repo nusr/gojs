@@ -16,7 +16,7 @@ func TestScanner(t *testing.T) {
 	console.log(null);
 	`
 	scanner := New(source)
-	tokens := scanner.ScanTokens()
+	tokens := scanner.Scan()
 
 	expects := []struct {
 		Type  token.Type

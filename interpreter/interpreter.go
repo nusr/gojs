@@ -6,9 +6,8 @@ import (
 	"strconv"
 
 	"github.com/nusr/gojs/call"
-	"github.com/nusr/gojs/control_flow"
 	"github.com/nusr/gojs/environment"
-	"github.com/nusr/gojs/expression"
+	"github.com/nusr/gojs/flow"
 	"github.com/nusr/gojs/statement"
 	"github.com/nusr/gojs/token"
 )
@@ -74,14 +73,18 @@ func convertLtoF(left any, right any) (float64, float64, bool) {
 }
 
 type Interpreter struct {
-	environment *environment.Environment
-	globals     *environment.Environment
+	environment     *environment.Environment
+	globals         *environment.Environment
+	lastObjectKey   any
+	lastObjectValue call.Property
 }
 
 func New(environment *environment.Environment) *Interpreter {
 	return &Interpreter{
-		environment: environment,
-		globals:     environment,
+		environment:     environment,
+		globals:         environment,
+		lastObjectKey:   "",
+		lastObjectValue: nil,
 	}
 }
 func (interpreter *Interpreter) GetGlobal() *environment.Environment {
@@ -90,27 +93,27 @@ func (interpreter *Interpreter) GetGlobal() *environment.Environment {
 func (interpreter *Interpreter) Interpret(list []statement.Statement) any {
 	var result any
 	for _, item := range list {
-		result = interpreter.execute(item)
-		if val, ok := result.(control_flow.ReturnValue); ok {
+		result = interpreter.Execute(item)
+		if val, ok := result.(flow.Return); ok {
 			return val.Value
 		}
 	}
 	return result
 }
 
-func (interpreter *Interpreter) execute(statement statement.Statement) any {
+func (interpreter *Interpreter) Execute(statement statement.Statement) any {
 	if statement == nil {
 		return nil
 	}
 	return statement.Accept(interpreter)
 }
 
-func (interpreter *Interpreter) evaluate(expression expression.Expression) any {
+func (interpreter *Interpreter) Evaluate(expression statement.Expression) any {
 	if expression == nil {
 		return nil
 	}
 	t := expression.Accept(interpreter)
-	if val, ok := t.(control_flow.ReturnValue); ok {
+	if val, ok := t.(flow.Return); ok {
 		return val.Value
 	}
 	return t
@@ -141,8 +144,8 @@ func (interpreter *Interpreter) ExecuteBlock(statement statement.BlockStatement,
 	previous := interpreter.environment
 	interpreter.environment = environment
 	for _, t := range statement.Statements {
-		result = interpreter.execute(t)
-		if val, ok := result.(control_flow.ReturnValue); ok {
+		result = interpreter.Execute(t)
+		if val, ok := result.(flow.Return); ok {
 			interpreter.environment = previous
 			return val
 		}
@@ -152,11 +155,11 @@ func (interpreter *Interpreter) ExecuteBlock(statement statement.BlockStatement,
 }
 
 func (interpreter *Interpreter) VisitExpressionStatement(statement statement.ExpressionStatement) any {
-	return interpreter.evaluate(statement.Expression)
+	return interpreter.Evaluate(statement.Expression)
 }
 func (interpreter *Interpreter) VisitVariableStatement(statement statement.VariableStatement) any {
 	if statement.Initializer != nil {
-		value := interpreter.evaluate(statement.Initializer)
+		value := interpreter.Evaluate(statement.Initializer)
 		interpreter.environment.Define(statement.Name.Lexeme, value)
 	} else {
 		interpreter.environment.Define(statement.Name.Lexeme, nil)
@@ -167,51 +170,52 @@ func (interpreter *Interpreter) VisitBlockStatement(statement statement.BlockSta
 	return interpreter.ExecuteBlock(statement, environment.New(interpreter.environment))
 }
 func (interpreter *Interpreter) VisitClassStatement(statement statement.ClassStatement) any {
-	// TODO
+	class := call.NewClass(statement.Methods)
+	interpreter.environment.Define(statement.Name.Lexeme, class)
 	return nil
 }
 func (interpreter *Interpreter) VisitFunctionStatement(statement statement.FunctionStatement) any {
-	interpreter.environment.Define(statement.Name.Lexeme, call.NewCallable(statement))
+	interpreter.environment.Define(statement.Name.Lexeme, call.NewFunction(statement.Body, statement.Params, interpreter.environment))
 	return nil
 }
 
 func (interpreter *Interpreter) VisitIfStatement(statement statement.IfStatement) (result any) {
-	if interpreter.isTruth(interpreter.evaluate(statement.Condition)) {
-		result = interpreter.execute(statement.ThenBranch)
+	if interpreter.isTruth(interpreter.Evaluate(statement.Condition)) {
+		result = interpreter.Execute(statement.ThenBranch)
 	} else if statement.ElseBranch != nil {
-		result = interpreter.execute(statement.ElseBranch)
+		result = interpreter.Execute(statement.ElseBranch)
 	}
-	if val, ok := result.(control_flow.ReturnValue); ok {
+	if val, ok := result.(flow.Return); ok {
 		return val
 	}
 	return nil
 }
 func (interpreter *Interpreter) VisitPrintStatement(statement statement.PrintStatement) any {
-	result := interpreter.evaluate(statement.Expression)
+	result := interpreter.Evaluate(statement.Expression)
 	actual := token.ConvertAnyToString(result)
 	fmt.Println(actual)
 	return result
 }
 
 func (interpreter *Interpreter) VisitReturnStatement(statement statement.ReturnStatement) any {
-	value := interpreter.evaluate(statement.Value)
-	return control_flow.NewReturnValue(value)
+	value := interpreter.Evaluate(statement.Value)
+	return flow.NewReturnValue(value)
 }
 func (interpreter *Interpreter) VisitWhileStatement(statement statement.WhileStatement) any {
-	for interpreter.isTruth(interpreter.evaluate(statement.Condition)) {
-		t := interpreter.execute(statement.Body)
-		if val, ok := t.(control_flow.ReturnValue); ok {
+	for interpreter.isTruth(interpreter.Evaluate(statement.Condition)) {
+		t := interpreter.Execute(statement.Body)
+		if val, ok := t.(flow.Return); ok {
 			return val
 		}
 	}
 	return nil
 }
 
-func (interpreter *Interpreter) VisitVariableExpression(expression expression.VariableExpression) any {
+func (interpreter *Interpreter) VisitVariableExpression(expression statement.VariableExpression) any {
 	return interpreter.environment.Get(expression.Name.Lexeme)
 }
-func (interpreter *Interpreter) VisitLiteralExpression(expr expression.LiteralExpression) any {
-	switch expr.TokenType {
+func (interpreter *Interpreter) VisitLiteralExpression(expr statement.LiteralExpression) any {
+	switch expr.Type {
 	case token.Null:
 		return nil
 	case token.String:
@@ -240,9 +244,9 @@ func (interpreter *Interpreter) VisitLiteralExpression(expr expression.LiteralEx
 	return nil
 }
 
-func (interpreter *Interpreter) VisitBinaryExpression(expression expression.BinaryExpression) any {
-	left := interpreter.evaluate(expression.Left)
-	right := interpreter.evaluate(expression.Right)
+func (interpreter *Interpreter) VisitBinaryExpression(expression statement.BinaryExpression) any {
+	left := interpreter.Evaluate(expression.Left)
+	right := interpreter.Evaluate(expression.Right)
 	switch expression.Operator.Type {
 	case token.EqualEqual:
 		return left == right
@@ -371,27 +375,40 @@ func (interpreter *Interpreter) VisitBinaryExpression(expression expression.Bina
 	return nil
 }
 
-func (interpreter *Interpreter) VisitCallExpression(expression expression.CallExpression) any {
-	callable := interpreter.evaluate(expression.Callee)
+func (interpreter *Interpreter) VisitCallExpression(expression statement.CallExpression) any {
+	callable := interpreter.Evaluate(expression.Callee)
 	var params []any
-	for _, item := range expression.ArgumentList {
-		params = append(params, interpreter.evaluate(item))
+	for _, item := range expression.Arguments {
+		params = append(params, interpreter.Evaluate(item))
 	}
-	if val, ok := callable.(call.BaseCallable); ok {
+	if val, ok := callable.(call.Callable); ok {
 		return val.Call(interpreter, params)
 	}
 	panic(any("can only call function and call"))
 }
-func (interpreter *Interpreter) VisitGetExpression(expression expression.GetExpression) any {
-	// TODO
+func (interpreter *Interpreter) VisitGetExpression(expression statement.GetExpression) any {
+	result := interpreter.Evaluate(expression.Object)
+	key := interpreter.Evaluate(expression.Property)
+	if val, ok := result.(call.Property); ok {
+		interpreter.lastObjectKey = key
+		interpreter.lastObjectValue = val
+		return val.Get(key)
+	}
 	return nil
 }
-func (interpreter *Interpreter) VisitSetExpression(expression expression.SetExpression) any {
-	// TODO
+func (interpreter *Interpreter) VisitSetExpression(expression statement.SetExpression) any {
+	interpreter.Evaluate(expression.Object)
+	key := interpreter.lastObjectKey
+	object := interpreter.lastObjectValue
+	if object != nil {
+		value := interpreter.Evaluate(expression.Value)
+		object.Set(key, value)
+		return value
+	}
 	return nil
 }
-func (interpreter *Interpreter) VisitLogicalExpression(expression expression.LogicalExpression) any {
-	left := interpreter.evaluate(expression.Left)
+func (interpreter *Interpreter) VisitLogicalExpression(expression statement.LogicalExpression) any {
+	left := interpreter.Evaluate(expression.Left)
 	check := interpreter.isTruth(left)
 	if expression.Operator.Type == token.And {
 		if !check {
@@ -402,25 +419,25 @@ func (interpreter *Interpreter) VisitLogicalExpression(expression expression.Log
 			return left
 		}
 	}
-	return interpreter.evaluate(expression.Right)
+	return interpreter.Evaluate(expression.Right)
 }
 
-func (interpreter *Interpreter) VisitSuperExpression(expression expression.SuperExpression) any {
+func (interpreter *Interpreter) VisitSuperExpression(expression statement.SuperExpression) any {
 	// TODO
 	return nil
 }
 
-func (interpreter *Interpreter) VisitGroupingExpression(expression expression.GroupingExpression) any {
-	result := interpreter.evaluate(expression.Expression)
+func (interpreter *Interpreter) VisitGroupingExpression(expression statement.GroupingExpression) any {
+	result := interpreter.Evaluate(expression.Expression)
 	return result
 }
 
-func (interpreter *Interpreter) VisitThisExpression(expression expression.ThisExpression) any {
+func (interpreter *Interpreter) VisitThisExpression(expression statement.ThisExpression) any {
 	// TODO
 	return nil
 }
-func (interpreter *Interpreter) VisitUnaryExpression(expression expression.UnaryExpression) any {
-	result := interpreter.evaluate(expression.Right)
+func (interpreter *Interpreter) VisitUnaryExpression(expression statement.UnaryExpression) any {
+	result := interpreter.Evaluate(expression.Right)
 	switch expression.Operator.Type {
 	case token.PlusPlus:
 		{
@@ -480,8 +497,48 @@ func (interpreter *Interpreter) VisitUnaryExpression(expression expression.Unary
 	return nil
 }
 
-func (interpreter *Interpreter) VisitAssignExpression(expression expression.AssignExpression) any {
-	temp := interpreter.evaluate(expression.Value)
+func (interpreter *Interpreter) VisitAssignExpression(expression statement.AssignExpression) any {
+	temp := interpreter.Evaluate(expression.Value)
 	interpreter.environment.Assign(expression.Name.Lexeme, temp)
 	return temp
+}
+
+func (interpreter *Interpreter) VisitTokenExpression(expression statement.TokenExpression) any {
+	return expression.Name.Lexeme
+}
+
+func (interpreter *Interpreter) VisitFunctionExpression(expression statement.FunctionExpression) any {
+	return call.NewFunction(expression.Body, expression.Params, interpreter.environment)
+}
+
+func (interpreter *Interpreter) VisitClassExpression(expression statement.ClassExpression) any {
+	class := call.NewClass(expression.Methods)
+	return class
+}
+
+func (interpreter *Interpreter) VisitArrayLiteralExpression(expression statement.ArrayLiteralExpression) any {
+	instance := call.NewArray()
+	for i, item := range expression.Elements {
+		value := interpreter.Evaluate(item)
+		instance.Set(int64(i), value)
+	}
+	return instance
+}
+
+func (interpreter *Interpreter) VisitObjectLiteralExpression(expression statement.ObjectLiteralExpression) any {
+	instance := call.NewInstance()
+	for _, item := range expression.Properties {
+		key := interpreter.Evaluate(item.Key)
+		value := interpreter.Evaluate(item.Value)
+		instance.Set(key, value)
+	}
+	return instance
+}
+
+func (interpreter *Interpreter) VisitNewExpression(expression statement.NewExpression) any {
+	if _, ok := expression.Expression.(statement.CallExpression); ok {
+		result := interpreter.Evaluate(expression.Expression)
+		return result
+	}
+	panic(`Class constructor cannot be invoked without 'new'`)
 }
