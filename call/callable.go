@@ -13,7 +13,6 @@ type InterpreterMethods interface {
 }
 
 type BaseCallable interface {
-	Size() int
 	Call(interpreter InterpreterMethods, params []any) any
 	String() string
 }
@@ -28,14 +27,15 @@ func NewCallable(declaration statement.FunctionStatement) BaseCallable {
 	}
 }
 
-func (callable *Callable) Size() int {
-	return len(callable.declaration.Params)
-}
-
 func (callable *Callable) Call(interpreter InterpreterMethods, params []any) any {
 	env := environment.New(interpreter.GetGlobal())
+	paramsLen := len(params)
 	for i, item := range callable.declaration.Params {
-		env.Define(item.Lexeme, params[i])
+		if i <= (paramsLen - 1) {
+			env.Define(item.Lexeme, params[i])
+		} else {
+			env.Define(item.Lexeme, nil)
+		}
 	}
 	return interpreter.ExecuteBlock(callable.declaration.Body, env)
 }

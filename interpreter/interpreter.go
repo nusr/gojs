@@ -378,9 +378,6 @@ func (interpreter *Interpreter) VisitCallExpression(expression expression.CallEx
 		params = append(params, interpreter.evaluate(item))
 	}
 	if val, ok := callable.(call.BaseCallable); ok {
-		if val.Size() != len(params) {
-			panic(any(fmt.Sprintf("expect %d size arguments, actual get %d\n", val.Size(), len(params))))
-		}
 		return val.Call(interpreter, params)
 	}
 	panic(any("can only call function and call"))
