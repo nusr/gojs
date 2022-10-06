@@ -381,7 +381,9 @@ func (interpreter *Interpreter) VisitCallExpression(expression statement.CallExp
 	for _, item := range expression.Arguments {
 		params = append(params, interpreter.Evaluate(item))
 	}
-	if val, ok := callable.(call.Callable); ok {
+	val, ok := callable.(call.Callable)
+	fmt.Printf("Type of %v is %T, bool: %v", callable, callable, ok)
+	if ok {
 		return val.Call(interpreter, params)
 	}
 	panic(any("can only call function and call"))
@@ -397,6 +399,8 @@ func (interpreter *Interpreter) VisitGetExpression(expression statement.GetExpre
 	return nil
 }
 func (interpreter *Interpreter) VisitSetExpression(expression statement.SetExpression) any {
+	interpreter.lastObjectKey = ""
+	interpreter.lastObjectValue = nil
 	interpreter.Evaluate(expression.Object)
 	key := interpreter.lastObjectKey
 	object := interpreter.lastObjectValue

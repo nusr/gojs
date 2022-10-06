@@ -500,9 +500,6 @@ func (parser *Parser) statement() statement.Statement {
 	if parser.match(token.Return) {
 		return parser.returnStatement()
 	}
-	if parser.match(token.Print) {
-		return parser.printStatement()
-	}
 	if parser.match(token.LeftBrace) {
 		return parser.block()
 	}

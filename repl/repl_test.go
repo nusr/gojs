@@ -111,3 +111,54 @@ func Test_interpret_array(t *testing.T) {
 		})
 	}
 }
+
+func Test_interpret_object(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		want   any
+	}{
+		{
+			"1",
+			"var a = {b: 1};a.b;",
+			int64(1),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			env := environment.New(nil)
+			got := interpret(tt.source, env)
+			if got != tt.want {
+				t.Errorf("expect= %v, actual= %v", tt.want, got)
+			}
+		})
+	}
+}
+
+func Test_interpret_function(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		want   any
+	}{
+		{
+			"1",
+			`
+			function add(a, b) {
+				return a + b;
+			}
+			add(1, 2);
+			`,
+			int64(3),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			env := environment.New(nil)
+			got := interpret(tt.source, env)
+			if got != tt.want {
+				t.Errorf("expect= %v, actual= %v", tt.want, got)
+			}
+		})
+	}
+}

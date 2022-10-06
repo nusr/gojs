@@ -11,22 +11,21 @@ const (
 )
 
 var KeywordMap = map[string]token.Type{
-	"call":   token.Class,
-	"else":   token.Else,
-	"false":  token.False,
-	"for":    token.For,
-	"fun":    token.Function,
-	"if":     token.If,
-	"null":   token.Null,
-	"print":  token.Print,
-	"return": token.Return,
-	"super":  token.Super,
-	"this":   token.This,
-	"true":   token.True,
-	"var":    token.Var,
-	"while":  token.While,
-	"do":     token.Do,
-	"new":    token.New,
+	"class":    token.Class,
+	"else":     token.Else,
+	"false":    token.False,
+	"for":      token.For,
+	"function": token.Function,
+	"if":       token.If,
+	"null":     token.Null,
+	"return":   token.Return,
+	"super":    token.Super,
+	"this":     token.This,
+	"true":     token.True,
+	"var":      token.Var,
+	"while":    token.While,
+	"do":       token.Do,
+	"new":      token.New,
 }
 
 type Scanner struct {

@@ -9,7 +9,7 @@ type Instance struct {
 	value map[any]any
 }
 
-func NewInstance() *Instance {
+func NewInstance() Property {
 	return &Instance{
 		value: make(map[any]any),
 	}
@@ -22,16 +22,14 @@ func (instance *Instance) Get(key any) any {
 	return nil
 }
 
-func (instance *Instance) Set(key any, value any) bool {
+func (instance *Instance) Set(key any, value any) {
 	if _, ok := instance.value[key]; ok {
 		instance.value[key] = value
-		return true
 	}
-	return false
 }
 
 type Class struct {
-	StaticMethods *Instance
+	StaticMethods Property
 	methods       []statement.Statement
 }
 

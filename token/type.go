@@ -50,7 +50,6 @@ const (
 	Or
 	BitAnd
 	BitOr
-	Print
 	Return
 	Super
 	This
