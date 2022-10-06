@@ -23,7 +23,7 @@ func (blockStatement BlockStatement) String() string {
 }
 
 type ClassStatement struct {
-	Name       *token.Token
+	Name       token.Token
 	SuperClass expression.VariableExpression
 	Methods    []FunctionStatement
 }
@@ -49,9 +49,9 @@ func (expressionStatement ExpressionStatement) String() string {
 }
 
 type FunctionStatement struct {
-	Name   *token.Token
+	Name   token.Token
 	Body   BlockStatement
-	Params []*token.Token
+	Params []token.Token
 }
 
 func (functionStatement FunctionStatement) Accept(visitor Visitor) any {
@@ -78,7 +78,6 @@ func (ifStatement IfStatement) String() string {
 
 type PrintStatement struct {
 	Expression expression.Expression
-	Comment    *token.Token
 }
 
 func (printStatement PrintStatement) Accept(visitor Visitor) any {
@@ -90,7 +89,7 @@ func (printStatement PrintStatement) String() string {
 }
 
 type ReturnStatement struct {
-	Keyword *token.Token
+	Keyword token.Token
 	Value   expression.Expression
 }
 
@@ -103,7 +102,7 @@ func (returnStatement ReturnStatement) String() string {
 }
 
 type VariableStatement struct {
-	Name        *token.Token
+	Name        token.Token
 	Initializer expression.Expression
 }
 

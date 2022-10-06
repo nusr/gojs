@@ -1,15 +1,11 @@
 package environment
 
-import (
-	"fmt"
-)
-
 type Environment struct {
 	parent *Environment
 	values map[string]any
 }
 
-func NewEnvironment(parent *Environment) *Environment {
+func New(parent *Environment) *Environment {
 	values := make(map[string]any)
 	return &Environment{
 		parent: parent,
@@ -24,7 +20,7 @@ func (environment *Environment) Get(key string) any {
 	if environment.parent != nil {
 		return environment.parent.Get(key)
 	}
-	panic(any(fmt.Sprintf("%s is not defined", key)))
+	return nil
 }
 func (environment *Environment) Define(name string, value any) {
 	environment.values[name] = value
@@ -39,5 +35,5 @@ func (environment *Environment) Assign(key string, value any) {
 		environment.parent.Assign(key, value)
 		return
 	}
-	panic(any(fmt.Sprintf("%s is not defined", key)))
+	environment.Define(key, value)
 }

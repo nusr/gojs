@@ -11,17 +11,26 @@ import (
 const maxParameterCount = 255
 
 type Parser struct {
-	tokens  []*token.Token
+	tokens  []token.Token
 	current int
 }
 
-func NewParser(tokens []*token.Token) *Parser {
+func New(tokens []token.Token) *Parser {
 	return &Parser{
 		current: 0,
 		tokens:  tokens,
 	}
 }
-func (parser *Parser) peek() *token.Token {
+
+func (parser *Parser) Parse() []statement.Statement {
+	var statements []statement.Statement
+	for !parser.isAtEnd() {
+		statements = append(statements, parser.declaration())
+	}
+	return statements
+}
+
+func (parser *Parser) peek() token.Token {
 	return parser.tokens[parser.current]
 }
 
@@ -32,12 +41,12 @@ func (parser *Parser) advance() {
 	parser.current++
 }
 
-func (parser *Parser) previous() *token.Token {
+func (parser *Parser) previous() token.Token {
 	return parser.tokens[parser.current-1]
 }
 
-func (parser *Parser) consume(tokenType token.Type, message string) *token.Token {
-	if parser.peek().TokenType != tokenType {
+func (parser *Parser) consume(tokenType token.Type, message string) token.Token {
+	if parser.peek().Type != tokenType {
 		panic(any(message))
 	}
 	parser.advance()
@@ -48,7 +57,7 @@ func (parser *Parser) check(tokenType token.Type) bool {
 	if parser.isAtEnd() {
 		return false
 	}
-	return parser.peek().TokenType == tokenType
+	return parser.peek().Type == tokenType
 }
 
 func (parser *Parser) match(tokenTypes ...token.Type) bool {
@@ -62,53 +71,49 @@ func (parser *Parser) match(tokenTypes ...token.Type) bool {
 }
 
 func (parser *Parser) varDeclaration() statement.Statement {
-	name := parser.consume(token.IDENTIFIER, "expect identifier after var")
-	if parser.match(token.EQUAL) {
-		initializer := parser.expression()
-		parser.match(token.SEMICOLON)
-		return statement.VariableStatement{
-			Name:        name,
-			Initializer: initializer,
-		}
-	} else {
-		parser.match(token.SEMICOLON)
-		return statement.VariableStatement{
-			Name: name,
-		}
+	name := parser.consume(token.Identifier, "expect identifier after var")
+	var initializer expression.Expression
+	if parser.match(token.Equal) {
+		initializer = parser.expression()
 	}
-
+	parser.match(token.Semicolon)
+	return statement.VariableStatement{
+		Name:        name,
+		Initializer: initializer,
+	}
 }
 func (parser *Parser) primary() expression.Expression {
-	if parser.match(token.TRUE) {
+	if parser.match(token.True) {
 		return expression.LiteralExpression{
-			TokenType: token.TRUE,
+			TokenType: token.True,
 		}
 	}
-	if parser.match(token.FALSE) {
+	if parser.match(token.False) {
 		return expression.LiteralExpression{
-			TokenType: token.FALSE,
+			TokenType: token.False,
 		}
 	}
-	if parser.match(token.NULL) {
+	if parser.match(token.Null) {
 		return expression.LiteralExpression{
-			TokenType: token.NULL,
+			TokenType: token.Null,
 		}
 	}
-	if parser.match(token.FLOAT64, token.INT64) {
+	if parser.match(token.Float64, token.Int64) {
 		t := parser.previous()
 		return expression.LiteralExpression{
 			Value:     t.Lexeme,
-			TokenType: t.TokenType,
+			TokenType: t.Type,
 		}
 
 	}
-	if parser.match(token.STRING) {
+	if parser.match(token.String) {
+		t := parser.previous()
 		return expression.LiteralExpression{
-			Value:     parser.previous().Lexeme,
-			TokenType: token.STRING,
+			Value:     t.Lexeme,
+			TokenType: t.Type,
 		}
 	}
-	if parser.match(token.IDENTIFIER) {
+	if parser.match(token.Identifier) {
 		return expression.VariableExpression{
 			Name: parser.previous(),
 		}
@@ -126,7 +131,7 @@ func (parser *Parser) finishCall(callee expression.Expression) expression.Expres
 	var params []expression.Expression
 	if !parser.check(token.RightParen) {
 		count := 0
-		for ok := true; ok; ok = parser.match(token.COMMA) {
+		for ok := true; ok; ok = parser.match(token.Comma) {
 			params = append(params, parser.expression())
 			count++
 			if count > maxParameterCount {
@@ -154,7 +159,7 @@ func (parser *Parser) call() expression.Expression {
 }
 
 func (parser *Parser) unary() expression.Expression {
-	if parser.match(token.MINUS, token.PLUS, token.BANG, token.MinusMinus, token.PlusPlus) {
+	if parser.match(token.Minus, token.Plus, token.Bang, token.MinusMinus, token.PlusPlus) {
 		operator := parser.previous()
 		value := parser.unary()
 		return expression.UnaryExpression{
@@ -167,7 +172,7 @@ func (parser *Parser) unary() expression.Expression {
 }
 func (parser *Parser) factor() expression.Expression {
 	unary := parser.unary()
-	for parser.match(token.STAR, token.SLASH) {
+	for parser.match(token.Star, token.Slash) {
 		operator := parser.previous()
 		right := parser.unary()
 		unary = expression.BinaryExpression{
@@ -181,7 +186,7 @@ func (parser *Parser) factor() expression.Expression {
 
 func (parser *Parser) term() expression.Expression {
 	factor := parser.factor()
-	for parser.match(token.PLUS, token.MINUS) {
+	for parser.match(token.Plus, token.Minus) {
 		operator := parser.previous()
 		right := parser.factor()
 		factor = expression.BinaryExpression{
@@ -195,7 +200,7 @@ func (parser *Parser) term() expression.Expression {
 
 func (parser *Parser) comparison() expression.Expression {
 	term := parser.term()
-	for parser.match(token.GREATER, token.GreaterEqual, token.LESS, token.LessEqual) {
+	for parser.match(token.Greater, token.GreaterEqual, token.Less, token.LessEqual) {
 		operator := parser.previous()
 		right := parser.term()
 		term = expression.BinaryExpression{
@@ -223,7 +228,7 @@ func (parser *Parser) equality() expression.Expression {
 
 func (parser *Parser) and() expression.Expression {
 	expr := parser.equality()
-	for parser.match(token.AND) {
+	for parser.match(token.And) {
 		operator := parser.previous()
 		right := parser.and()
 		expr = expression.LogicalExpression{
@@ -236,7 +241,7 @@ func (parser *Parser) and() expression.Expression {
 }
 func (parser *Parser) or() expression.Expression {
 	expr := parser.and()
-	for parser.match(token.OR) {
+	for parser.match(token.Or) {
 		operator := parser.previous()
 		right := parser.and()
 		expr = expression.LogicalExpression{
@@ -249,7 +254,7 @@ func (parser *Parser) or() expression.Expression {
 }
 func (parser *Parser) assignment() expression.Expression {
 	expr := parser.or()
-	if parser.match(token.EQUAL) {
+	if parser.match(token.Equal) {
 		equal := parser.previous()
 		value := parser.assignment()
 		if val, ok := expr.(expression.VariableExpression); ok {
@@ -272,7 +277,7 @@ func (parser *Parser) ifStatement() statement.Statement {
 	expr := parser.expression()
 	parser.consume(token.RightParen, "expected ) after if")
 	thenBranch := parser.statement()
-	if parser.match(token.ELSE) {
+	if parser.match(token.Else) {
 		elseBranch := parser.statement()
 		return statement.IfStatement{
 			Condition:  expr,
@@ -289,27 +294,19 @@ func (parser *Parser) ifStatement() statement.Statement {
 
 func (parser *Parser) printStatement() statement.Statement {
 	expr := parser.expression()
-	if !parser.isAtEnd() {
-		parser.match(token.SEMICOLON)
-	}
-	if parser.match(token.LineComment) {
-		comment := parser.previous()
-		return statement.PrintStatement{
-			Expression: expr,
-			Comment:    comment,
-		}
-	}
+
+	parser.match(token.Semicolon)
+
 	return statement.PrintStatement{
 		Expression: expr,
-		Comment:    nil,
 	}
 }
 
 func (parser *Parser) expressionStatement() statement.Statement {
 	expr := parser.expression()
-	if !parser.isAtEnd() {
-		parser.match(token.SEMICOLON)
-	}
+
+	parser.match(token.Semicolon)
+
 	return statement.ExpressionStatement{
 		Expression: expr,
 	}
@@ -317,7 +314,7 @@ func (parser *Parser) expressionStatement() statement.Statement {
 
 func (parser *Parser) block() statement.BlockStatement {
 	var statements []statement.Statement
-	for !parser.isAtEnd() && parser.peek().TokenType != token.RightBrace {
+	for !parser.isAtEnd() && parser.peek().Type != token.RightBrace {
 		statements = append(statements, parser.declaration())
 	}
 	parser.consume(token.RightBrace, "expected } after block")
@@ -330,19 +327,19 @@ func (parser *Parser) forStatement() statement.Statement {
 	parser.consume(token.LeftParen, "expect (")
 
 	var initializer statement.Statement
-	if parser.match(token.SEMICOLON) {
+	if parser.match(token.Semicolon) {
 		initializer = nil
-	} else if parser.match(token.VAR) {
+	} else if parser.match(token.Var) {
 		initializer = parser.varDeclaration()
 	} else {
 		initializer = parser.expressionStatement()
 	}
 
 	var condition expression.Expression
-	if !parser.check(token.SEMICOLON) {
+	if !parser.check(token.Semicolon) {
 		condition = parser.expression()
 	}
-	parser.consume(token.SEMICOLON, "expect ;")
+	parser.consume(token.Semicolon, "expect ;")
 
 	var increment statement.Statement
 	if !parser.check(token.RightParen) {
@@ -354,7 +351,7 @@ func (parser *Parser) forStatement() statement.Statement {
 
 	if condition == nil {
 		condition = expression.LiteralExpression{
-			TokenType: token.TRUE,
+			TokenType: token.True,
 		}
 	}
 
@@ -385,7 +382,7 @@ func (parser *Parser) forStatement() statement.Statement {
 func (parser *Parser) doWhile() statement.Statement {
 	parser.consume(token.LeftBrace, "expect {")
 	body := parser.block()
-	parser.consume(token.WHILE, "expect while")
+	parser.consume(token.While, "expect while")
 	parser.consume(token.LeftParen, "expect (")
 	condition := parser.expression()
 	parser.consume(token.RightParen, "expect )")
@@ -411,48 +408,51 @@ func (parser *Parser) while() statement.Statement {
 }
 
 func (parser *Parser) returnStatement() statement.Statement {
-	t := parser.previous()
-	expr := parser.expression()
-	parser.match(token.SEMICOLON)
+	keyword := parser.previous()
+	var expr expression.Expression
+	if !parser.check(token.Semicolon) {
+		expr = parser.expression()
+	}
+	parser.match(token.Semicolon)
 	return statement.ReturnStatement{
-		Keyword: t,
+		Keyword: keyword,
 		Value:   expr,
 	}
 }
 
 func (parser *Parser) statement() statement.Statement {
-	if parser.match(token.IF) {
+	if parser.match(token.If) {
 		return parser.ifStatement()
 	}
-	if parser.match(token.RETURN) {
+	if parser.match(token.Return) {
 		return parser.returnStatement()
 	}
-	if parser.match(token.PRINT) {
+	if parser.match(token.Print) {
 		return parser.printStatement()
 	}
 	if parser.match(token.LeftBrace) {
 		return parser.block()
 	}
-	if parser.match(token.DO) {
+	if parser.match(token.Do) {
 		return parser.doWhile()
 	}
-	if parser.match(token.FOR) {
+	if parser.match(token.For) {
 		return parser.forStatement()
 	}
-	if parser.match(token.WHILE) {
+	if parser.match(token.While) {
 		return parser.while()
 	}
 	return parser.expressionStatement()
 }
 
 func (parser *Parser) functionDeclaration() statement.FunctionStatement {
-	name := parser.consume(token.IDENTIFIER, "expect name")
+	name := parser.consume(token.Identifier, "expect name")
 	parser.consume(token.LeftParen, "expect (")
-	var parameters []*token.Token
+	var parameters []token.Token
 	if !parser.check(token.RightParen) {
 		count := 0
-		for ok := true; ok; ok = parser.match(token.COMMA) {
-			parameters = append(parameters, parser.consume(token.IDENTIFIER, "expect parameter name"))
+		for ok := true; ok; ok = parser.match(token.Comma) {
+			parameters = append(parameters, parser.consume(token.Identifier, "expect parameter name"))
 			count++
 			if count > maxParameterCount {
 				panic(any("over max parameter count"))
@@ -469,7 +469,7 @@ func (parser *Parser) functionDeclaration() statement.FunctionStatement {
 	}
 }
 func (parser *Parser) classDeclaration() statement.ClassStatement {
-	name := parser.consume(token.IDENTIFIER, "expect call name")
+	name := parser.consume(token.Identifier, "expect call name")
 	parser.consume(token.LeftBrace, "expect {")
 	var methods []statement.FunctionStatement
 	for !parser.check(token.RightBrace) && !parser.isAtEnd() {
@@ -483,27 +483,19 @@ func (parser *Parser) classDeclaration() statement.ClassStatement {
 	}
 }
 func (parser *Parser) declaration() statement.Statement {
-	if parser.match(token.CLASS) {
+	if parser.match(token.Class) {
 		return parser.classDeclaration()
 	}
-	if parser.match(token.FUNCTION) {
+	if parser.match(token.Function) {
 		return parser.functionDeclaration()
 	}
-	if parser.match(token.VAR) {
+	if parser.match(token.Var) {
 		return parser.varDeclaration()
 	}
 
 	return parser.statement()
 }
 
-func (parser *Parser) Parse() []statement.Statement {
-	var statements []statement.Statement
-	for !parser.isAtEnd() {
-		statements = append(statements, parser.declaration())
-	}
-	return statements
-}
-
 func (parser *Parser) isAtEnd() bool {
-	return parser.peek().TokenType == token.EOF
+	return parser.peek().Type == token.EOF
 }

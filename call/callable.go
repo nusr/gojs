@@ -2,6 +2,7 @@ package call
 
 import (
 	"fmt"
+
 	"github.com/nusr/gojs/environment"
 	"github.com/nusr/gojs/statement"
 )
@@ -32,7 +33,7 @@ func (callable *Callable) Size() int {
 }
 
 func (callable *Callable) Call(interpreter InterpreterMethods, params []any) any {
-	env := environment.NewEnvironment(interpreter.GetGlobal())
+	env := environment.New(interpreter.GetGlobal())
 	for i, item := range callable.declaration.Params {
 		env.Define(item.Lexeme, params[i])
 	}

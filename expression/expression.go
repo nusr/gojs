@@ -10,7 +10,7 @@ type Expression interface {
 }
 
 type AssignExpression struct {
-	Name  *token.Token
+	Name  token.Token
 	Value Expression
 }
 
@@ -24,7 +24,7 @@ func (assignExpression AssignExpression) String() string {
 
 type BinaryExpression struct {
 	Left     Expression
-	Operator *token.Token
+	Operator token.Token
 	Right    Expression
 }
 
@@ -38,7 +38,7 @@ func (binaryExpression BinaryExpression) String() string {
 
 type CallExpression struct {
 	Callee       Expression
-	Paren        *token.Token
+	Paren        token.Token
 	ArgumentList []Expression
 }
 
@@ -52,7 +52,7 @@ func (callExpression CallExpression) String() string {
 
 type GetExpression struct {
 	Object Expression
-	Name   *token.Token
+	Name   token.Token
 }
 
 func (getExpression GetExpression) Accept(visitor Visitor) any {
@@ -65,7 +65,7 @@ func (getExpression GetExpression) String() string {
 
 type SetExpression struct {
 	Object Expression
-	Name   *token.Token
+	Name   token.Token
 	Value  Expression
 }
 
@@ -104,7 +104,7 @@ func (literalExpression LiteralExpression) String() string {
 
 type LogicalExpression struct {
 	Left     Expression
-	Operator *token.Token
+	Operator token.Token
 	Right    Expression
 }
 
@@ -117,7 +117,7 @@ func (logicalExpression LogicalExpression) String() string {
 }
 
 type SuperExpression struct {
-	Keyword *token.Token
+	Keyword token.Token
 	Value   Expression
 }
 
@@ -130,7 +130,7 @@ func (superExpression SuperExpression) String() string {
 }
 
 type ThisExpression struct {
-	Keyword *token.Token
+	Keyword token.Token
 }
 
 func (thisExpression ThisExpression) Accept(visitor Visitor) any {
@@ -142,7 +142,7 @@ func (thisExpression ThisExpression) String() string {
 }
 
 type UnaryExpression struct {
-	Operator *token.Token
+	Operator token.Token
 	Right    Expression
 }
 
@@ -155,7 +155,7 @@ func (unaryExpression UnaryExpression) String() string {
 }
 
 type VariableExpression struct {
-	Name *token.Token
+	Name token.Token
 }
 
 func (variableExpression VariableExpression) Accept(visitor Visitor) any {

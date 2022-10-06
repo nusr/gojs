@@ -17,8 +17,6 @@ const (
 	nanNumber = "NaN"
 )
 
-const whileMaxIteration = 100000
-
 func convertBtoF(b bool) float64 {
 	if b {
 		return float64(1)
@@ -80,7 +78,7 @@ type Interpreter struct {
 	globals     *environment.Environment
 }
 
-func NewInterpreter(environment *environment.Environment) *Interpreter {
+func New(environment *environment.Environment) *Interpreter {
 	return &Interpreter{
 		environment: environment,
 		globals:     environment,
@@ -134,7 +132,7 @@ func (interpreter *Interpreter) isTruth(value any) bool {
 			return false
 		}
 	}
-	text := token.LiteralTypeToString(value)
+	text := token.ConvertAnyToString(value)
 	result := text != ""
 	return result
 }
@@ -166,7 +164,7 @@ func (interpreter *Interpreter) VisitVariableStatement(statement statement.Varia
 	return nil
 }
 func (interpreter *Interpreter) VisitBlockStatement(statement statement.BlockStatement) any {
-	return interpreter.ExecuteBlock(statement, environment.NewEnvironment(interpreter.environment))
+	return interpreter.ExecuteBlock(statement, environment.New(interpreter.environment))
 }
 func (interpreter *Interpreter) VisitClassStatement(statement statement.ClassStatement) any {
 	// TODO
@@ -190,7 +188,7 @@ func (interpreter *Interpreter) VisitIfStatement(statement statement.IfStatement
 }
 func (interpreter *Interpreter) VisitPrintStatement(statement statement.PrintStatement) any {
 	result := interpreter.evaluate(statement.Expression)
-	actual := token.LiteralTypeToString(result)
+	actual := token.ConvertAnyToString(result)
 	fmt.Println(actual)
 	return result
 }
@@ -212,26 +210,31 @@ func (interpreter *Interpreter) VisitWhileStatement(statement statement.WhileSta
 func (interpreter *Interpreter) VisitVariableExpression(expression expression.VariableExpression) any {
 	return interpreter.environment.Get(expression.Name.Lexeme)
 }
-func (interpreter *Interpreter) VisitLiteralExpression(expression expression.LiteralExpression) any {
-	switch expression.TokenType {
-	case token.NULL:
+func (interpreter *Interpreter) VisitLiteralExpression(expr expression.LiteralExpression) any {
+	switch expr.TokenType {
+	case token.Null:
 		return nil
-	case token.STRING:
-		return expression.String
-	case token.FLOAT64:
+	case token.String:
+		return expr.Value
+	case token.Float64:
 		{
-			result, _ := strconv.ParseFloat(expression.Value, 64)
-
+			result, err := strconv.ParseFloat(expr.Value, 64)
+			if err != nil {
+				panic(err)
+			}
 			return result
 		}
-	case token.INT64:
+	case token.Int64:
 		{
-			result, _ := strconv.ParseInt(expression.Value, 10, 64)
+			result, err := strconv.ParseInt(expr.Value, 10, 64)
+			if err != nil {
+				panic(err)
+			}
 			return result
 		}
-	case token.TRUE:
+	case token.True:
 		return true
-	case token.FALSE:
+	case token.False:
 		return false
 	}
 	return nil
@@ -240,12 +243,12 @@ func (interpreter *Interpreter) VisitLiteralExpression(expression expression.Lit
 func (interpreter *Interpreter) VisitBinaryExpression(expression expression.BinaryExpression) any {
 	left := interpreter.evaluate(expression.Left)
 	right := interpreter.evaluate(expression.Right)
-	switch expression.Operator.TokenType {
+	switch expression.Operator.Type {
 	case token.EqualEqual:
 		return left == right
 	case token.BangEqual:
 		return left != right
-	case token.LESS:
+	case token.Less:
 		{
 			_, stringType1 := left.(string)
 			_, stringType2 := right.(string)
@@ -271,7 +274,7 @@ func (interpreter *Interpreter) VisitBinaryExpression(expression expression.Bina
 			}
 			return a <= b
 		}
-	case token.GREATER:
+	case token.Greater:
 		{
 			_, stringType1 := left.(string)
 			_, stringType2 := right.(string)
@@ -297,12 +300,12 @@ func (interpreter *Interpreter) VisitBinaryExpression(expression expression.Bina
 			}
 			return a >= b
 		}
-	case token.PLUS:
+	case token.Plus:
 		{
 			_, stringType1 := left.(string)
 			_, stringType2 := right.(string)
 			if stringType1 || stringType2 {
-				return token.LiteralTypeToString(left) + token.LiteralTypeToString(right)
+				return token.ConvertAnyToString(left) + token.ConvertAnyToString(right)
 			}
 			if a, b, check := convertLtoI(left, right); check {
 				return a + b
@@ -313,7 +316,7 @@ func (interpreter *Interpreter) VisitBinaryExpression(expression expression.Bina
 			}
 			return a + b
 		}
-	case token.MINUS:
+	case token.Minus:
 		{
 			_, stringType1 := left.(string)
 			_, stringType2 := right.(string)
@@ -329,7 +332,7 @@ func (interpreter *Interpreter) VisitBinaryExpression(expression expression.Bina
 			}
 			return a - b
 		}
-	case token.STAR:
+	case token.Star:
 		{
 			_, stringType1 := left.(string)
 			_, stringType2 := right.(string)
@@ -345,7 +348,7 @@ func (interpreter *Interpreter) VisitBinaryExpression(expression expression.Bina
 			}
 			return a * b
 		}
-	case token.SLASH:
+	case token.Slash:
 		{
 			_, stringType1 := left.(string)
 			_, stringType2 := right.(string)
@@ -393,7 +396,7 @@ func (interpreter *Interpreter) VisitSetExpression(expression expression.SetExpr
 func (interpreter *Interpreter) VisitLogicalExpression(expression expression.LogicalExpression) any {
 	left := interpreter.evaluate(expression.Left)
 	check := interpreter.isTruth(left)
-	if expression.Operator.TokenType == token.AND {
+	if expression.Operator.Type == token.And {
 		if !check {
 			return left
 		}
@@ -421,7 +424,7 @@ func (interpreter *Interpreter) VisitThisExpression(expression expression.ThisEx
 }
 func (interpreter *Interpreter) VisitUnaryExpression(expression expression.UnaryExpression) any {
 	result := interpreter.evaluate(expression.Right)
-	switch expression.Operator.TokenType {
+	switch expression.Operator.Type {
 	case token.PlusPlus:
 		{
 
@@ -459,9 +462,9 @@ func (interpreter *Interpreter) VisitUnaryExpression(expression expression.Unary
 			return temp
 
 		}
-	case token.PLUS:
+	case token.Plus:
 		return result
-	case token.MINUS:
+	case token.Minus:
 		{
 			if result == nil {
 				return -0
@@ -474,7 +477,7 @@ func (interpreter *Interpreter) VisitUnaryExpression(expression expression.Unary
 			}
 			return nanNumber
 		}
-	case token.BANG:
+	case token.Bang:
 		return !interpreter.isTruth(result)
 	}
 	return nil

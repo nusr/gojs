@@ -2,6 +2,7 @@ package control_flow
 
 import (
 	"fmt"
+
 	"github.com/nusr/gojs/token"
 )
 
@@ -16,5 +17,5 @@ func NewReturnValue(value any) ReturnValue {
 }
 
 func (r ReturnValue) String() string {
-	return fmt.Sprintf("control_flow value : %s\n", token.LiteralTypeToString(r.Value))
+	return fmt.Sprintf("control_flow value : %s\n", token.ConvertAnyToString(r.Value))
 }
