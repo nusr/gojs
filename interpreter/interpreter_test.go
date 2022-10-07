@@ -195,30 +195,30 @@ func Test_interpret_class(t *testing.T) {
 		source string
 		want   any
 	}{
-		// {
-		// "basic",
-		// `
-		// var b = 'value'
-		// class Base {
-		// a = b;
-		// }
-		// var c = new Base();
-		// c.a;
-		// `,
-		// "value",
-		// },
-		// {
-		// "change methods",
-		// `
-		// class Base {
-		// a = 1
-		// }
-		// var c = new Base()
-		// c.a = 2
-		// c.a
-		// `,
-		// int64(2),
-		// },
+		{
+			"basic",
+			`
+		var b = 'value'
+		class Base {
+		a = b;
+		}
+		var c = new Base();
+		c.a;
+		`,
+			"value",
+		},
+		{
+			"change methods",
+			`
+		class Base {
+		a = 1
+		}
+		var c = new Base()
+		c.a = 2
+		c.a
+		`,
+			int64(2),
+		},
 		{
 			"static",
 			`
