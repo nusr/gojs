@@ -8,37 +8,47 @@ import (
 type Type int
 
 const (
-	LeftParen    Type = iota // (
-	RightParen               // )
-	LeftBrace                // {
-	RightBrace               // }
-	LeftSquare               // [
-	RightSquare              // ]
-	Comma                    // ,
-	Dot                      // .
-	Minus                    // -
-	MinusMinus               // --i
-	Plus                     // +
-	PlusPlus                 // ++
-	Semicolon                // ;
-	Colon                    // :
-	Slash                    // /
-	Star                     // *
-	Percent                  // %
-	Mark                     // ?
-	Bang                     // one or two character tokens !
-	BangEqual                // !=
-	Equal                    // =
-	EqualEqual               // ==
-	Greater                  // >
-	GreaterEqual             // >=
-	Less                     // <
-	LessEqual                // <=
-	Identifier               // Literals
+	LeftParen       Type = iota // (
+	RightParen                  // )
+	LeftBrace                   // {
+	RightBrace                  // }
+	LeftSquare                  // [
+	RightSquare                 // ]
+	Comma                       // ,
+	Dot                         // .
+	Minus                       // -
+	MinusEqual                  // -=
+	MinusMinus                  // --i
+	Plus                        // +
+	PlusEqual                   // +=
+	PlusPlus                    // ++
+	Semicolon                   // ;
+	Colon                       // :
+	Slash                       // /
+	SlashEqual                  // /=
+	Star                        // *
+	StarEqual                   // *=
+	StarStar                    // **
+	StarStarEqual               // **=
+	Percent                     // %
+	PercentEqual                // %=
+	Mark                        // ?
+	Bang                        // one or two character tokens !
+	BangEqual                   // !=
+	BangEqualEqual              // !==
+	Equal                       // =
+	EqualEqual                  // ==
+	EqualEqualEqual             // ===
+	Greater                     // >
+	GreaterEqual                // >=
+	Less                        // <
+	LessEqual                   // <=
+	Identifier                  // Literals
 	String
 	Float64
 	Int64
-	And // keywords
+	And      // keywords
+	AndEqual // &&=
 	Class
 	Else
 	False
@@ -48,16 +58,20 @@ const (
 	If
 	Null // null
 	Or
-	BitAnd
-	BitOr
+	OrEqual     // ||=
+	BitAnd      // &
+	BitAndEqual // &=
+	BitOr       // |
+	BitOrEqual  // |=
 	Return
 	Super
 	This
-	Var   // variable
-	Do    // do
-	While // while
-	New   // new
-	EOF   // end
+	Static // static
+	Var    // variable
+	Do     // do
+	While  // while
+	New    // new
+	EOF    // end
 )
 
 func ConvertAnyToString(text any) string {

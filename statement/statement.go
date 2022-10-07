@@ -40,7 +40,8 @@ func (statement ClassStatement) Accept(visitor StatementVisitor) any {
 func (statement ClassStatement) String() string {
 	var temp []string
 	for _, item := range statement.Methods {
-		temp = append(temp, item.String())
+		t := strings.Split(item.String(), " ")
+		temp = append(temp, strings.Join(t[1:], " "))
 	}
 
 	return "class " + statement.Name.String() + "{" + strings.Join(temp, "") + "}"
@@ -62,6 +63,7 @@ type FunctionStatement struct {
 	Name   token.Token
 	Body   BlockStatement
 	Params []token.Token
+	Static bool
 }
 
 func (statement FunctionStatement) Accept(visitor StatementVisitor) any {
@@ -74,7 +76,7 @@ func (statement FunctionStatement) String() string {
 		temp = append(temp, item.String())
 	}
 
-	return "function " + statement.Name.String() + "(" + strings.Join(temp, ",") + "){" + statement.Body.String() + "}"
+	return "function " + statement.Name.String() + "(" + strings.Join(temp, ",") + ")" + statement.Body.String()
 }
 
 type IfStatement struct {
@@ -95,18 +97,6 @@ func (statement IfStatement) String() string {
 	return temp
 }
 
-type PrintStatement struct {
-	Expression Expression
-}
-
-func (statement PrintStatement) Accept(visitor StatementVisitor) any {
-	return visitor.VisitPrintStatement(statement)
-}
-
-func (statement PrintStatement) String() string {
-	return ""
-}
-
 type ReturnStatement struct {
 	Value Expression
 }
@@ -125,6 +115,7 @@ func (statement ReturnStatement) String() string {
 type VariableStatement struct {
 	Name        token.Token
 	Initializer Expression
+	Static      bool
 }
 
 func (statement VariableStatement) Accept(visitor StatementVisitor) any {
@@ -140,6 +131,7 @@ func (statement VariableStatement) String() string {
 }
 
 type WhileStatement struct {
+	Name      token.Token
 	Condition Expression
 	Body      Statement
 }
@@ -158,7 +150,6 @@ type StatementVisitor interface {
 	VisitExpressionStatement(statement ExpressionStatement) any
 	VisitFunctionStatement(statement FunctionStatement) any
 	VisitIfStatement(statement IfStatement) any
-	VisitPrintStatement(statement PrintStatement) any
 	VisitReturnStatement(statement ReturnStatement) any
 	VisitVariableStatement(statement VariableStatement) any
 	VisitWhileStatement(statement WhileStatement) any

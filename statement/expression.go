@@ -58,6 +58,7 @@ func (expression CallExpression) String() string {
 type GetExpression struct {
 	Object   Expression
 	Property Expression
+	IsSquare bool // []
 }
 
 func (expression GetExpression) Accept(visitor ExpressionVisitor) any {
@@ -65,6 +66,9 @@ func (expression GetExpression) Accept(visitor ExpressionVisitor) any {
 }
 
 func (expression GetExpression) String() string {
+	if expression.IsSquare {
+		return expression.Object.String() + "[" + expression.Property.String() + "]"
+	}
 	return expression.Object.String() + "." + expression.Property.String()
 }
 
@@ -198,9 +202,9 @@ func (expression FunctionExpression) String() string {
 	}
 	var name string
 	if expression.Name != nil {
-		name = expression.Name.String()
+		name = " " + expression.Name.String()
 	}
-	return "function " + name + "(" + strings.Join(temp, ",") + "){" + expression.Body.String() + "}"
+	return "function" + name + "(" + strings.Join(temp, ",") + ")" + expression.Body.String()
 }
 
 type ClassExpression struct {
@@ -216,7 +220,8 @@ func (expression ClassExpression) Accept(visitor ExpressionVisitor) any {
 func (expression ClassExpression) String() string {
 	var temp []string
 	for _, item := range expression.Methods {
-		temp = append(temp, item.String())
+		t := strings.Split(item.String(), " ")
+		temp = append(temp, strings.Join(t[1:], " "))
 	}
 	var name string
 	if expression.Name != nil {

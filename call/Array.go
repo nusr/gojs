@@ -50,3 +50,11 @@ func (array *Array) Set(index any, value any) {
 		array.value[i] = value
 	}
 }
+
+func (array *Array) Has(index any) bool {
+	i := convertAnyToInt(index)
+	if i >= 0 && i <= int64(len(array.value)-1) {
+		return true
+	}
+	return false
+}

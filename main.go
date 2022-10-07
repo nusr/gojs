@@ -20,7 +20,7 @@ func main() {
 			fmt.Println(result)
 		}
 	} else {
-		fmt.Println("Usage: lox [path]")
+		fmt.Println("Usage: node [path]")
 		os.Exit(64)
 	}
 }

@@ -73,6 +73,30 @@ func Test_interpret_primary(t *testing.T) {
 	}
 }
 
+func Test_interpret_binary(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		want   any
+	}{
+		{
+			"basic",
+			"var a = 1; a += 3;a;",
+			int64(4),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			actual := interpret(tt.source)
+
+			if actual != tt.want {
+				t.Errorf("expect= %v, actual= %v", tt.want, actual)
+			}
+		})
+	}
+}
+
 func Test_interpret_array(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -171,17 +195,40 @@ func Test_interpret_class(t *testing.T) {
 		source string
 		want   any
 	}{
+		// {
+		// "basic",
+		// `
+		// var b = 'value'
+		// class Base {
+		// a = b;
+		// }
+		// var c = new Base();
+		// c.a;
+		// `,
+		// "value",
+		// },
+		// {
+		// "change methods",
+		// `
+		// class Base {
+		// a = 1
+		// }
+		// var c = new Base()
+		// c.a = 2
+		// c.a
+		// `,
+		// int64(2),
+		// },
 		{
-			"basic",
+			"static",
 			`
-			var b = 'value'
 			class Base {
-				a = b;
+				static a = 1
 			}
-			var c = new Base();
-			c.a;
+			Base.a = 2
+			Base.a
 			`,
-			"value",
+			int64(2),
 		},
 	}
 	for _, tt := range tests {

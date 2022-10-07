@@ -21,3 +21,9 @@ type Property interface {
 	Get(key any) any
 	Set(key any, value any)
 }
+
+type ClassType interface {
+	Property
+	Callable
+	SetMethods(methods []statement.Statement)
+}

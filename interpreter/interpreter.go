@@ -169,8 +169,31 @@ func (interpreter *Interpreter) VisitVariableStatement(statement statement.Varia
 func (interpreter *Interpreter) VisitBlockStatement(statement statement.BlockStatement) any {
 	return interpreter.ExecuteBlock(statement, environment.New(interpreter.environment))
 }
+
+func (interpreter *Interpreter) getClassBody(methods []statement.Statement) call.ClassType {
+	class := call.NewClass([]statement.Statement{})
+	var result []statement.Statement
+	for _, item := range methods {
+		if val, ok := item.(statement.VariableStatement); ok {
+			if val.Static {
+				class.Set(val.Name.Lexeme, interpreter.Evaluate(val.Initializer))
+			} else {
+				result = append(result, val)
+			}
+		} else if val, ok := item.(statement.FunctionStatement); ok {
+			if val.Static {
+				class.Set(val.Name.Lexeme, call.NewFunction(val.Body, val.Params, interpreter.environment))
+			} else {
+				result = append(result, val)
+			}
+		}
+	}
+	class.SetMethods(result)
+	return class
+}
+
 func (interpreter *Interpreter) VisitClassStatement(statement statement.ClassStatement) any {
-	class := call.NewClass(statement.Methods)
+	class := interpreter.getClassBody(statement.Methods)
 	interpreter.environment.Define(statement.Name.Lexeme, class)
 	return nil
 }
@@ -189,12 +212,6 @@ func (interpreter *Interpreter) VisitIfStatement(statement statement.IfStatement
 		return val
 	}
 	return nil
-}
-func (interpreter *Interpreter) VisitPrintStatement(statement statement.PrintStatement) any {
-	result := interpreter.Evaluate(statement.Expression)
-	actual := token.ConvertAnyToString(result)
-	fmt.Println(actual)
-	return result
 }
 
 func (interpreter *Interpreter) VisitReturnStatement(statement statement.ReturnStatement) any {
@@ -249,8 +266,12 @@ func (interpreter *Interpreter) VisitBinaryExpression(expression statement.Binar
 	right := interpreter.Evaluate(expression.Right)
 	switch expression.Operator.Type {
 	case token.EqualEqual:
+		return token.ConvertAnyToString(left) == token.ConvertAnyToString(right)
+	case token.EqualEqualEqual:
 		return left == right
 	case token.BangEqual:
+		return token.ConvertAnyToString(left) != token.ConvertAnyToString(right)
+	case token.BangEqualEqual:
 		return left != right
 	case token.Less:
 		{
@@ -370,6 +391,38 @@ func (interpreter *Interpreter) VisitBinaryExpression(expression statement.Binar
 				return math.MaxFloat64
 			}
 			return a / b
+		}
+	case token.Percent:
+		{
+			_, stringType1 := left.(string)
+			_, stringType2 := right.(string)
+			if stringType1 || stringType2 {
+				return nanNumber
+			}
+			if a, b, check := convertLtoI(left, right); check {
+				return a % b
+			}
+			a, b, check := convertLtoF(left, right)
+			if !check {
+				panic(any(fmt.Sprintf("Percent can not handle value left:%v,right:%v", left, right)))
+			}
+			return int64(a) % int64(b)
+		}
+	case token.StarStar:
+		{
+			_, stringType1 := left.(string)
+			_, stringType2 := right.(string)
+			if stringType1 || stringType2 {
+				return nanNumber
+			}
+			if a, b, check := convertLtoI(left, right); check {
+				return math.Pow(float64(a), float64(b))
+			}
+			a, b, check := convertLtoF(left, right)
+			if !check {
+				panic(any(fmt.Sprintf("StarStar can not handle value left:%v,right:%v", left, right)))
+			}
+			return math.Pow(a, b)
 		}
 	}
 	return nil
@@ -516,8 +569,7 @@ func (interpreter *Interpreter) VisitFunctionExpression(expression statement.Fun
 }
 
 func (interpreter *Interpreter) VisitClassExpression(expression statement.ClassExpression) any {
-	class := call.NewClass(expression.Methods)
-	return class
+	return interpreter.getClassBody(expression.Methods)
 }
 
 func (interpreter *Interpreter) VisitArrayLiteralExpression(expression statement.ArrayLiteralExpression) any {

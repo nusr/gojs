@@ -1,8 +1,6 @@
 package flow
 
 import (
-	"fmt"
-
 	"github.com/nusr/gojs/token"
 )
 
@@ -17,5 +15,5 @@ func NewReturnValue(value any) Return {
 }
 
 func (r Return) String() string {
-	return fmt.Sprintf("return value : %s\n", token.ConvertAnyToString(r.Value))
+	return token.ConvertAnyToString(r.Value)
 }

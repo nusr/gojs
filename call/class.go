@@ -26,24 +26,41 @@ func (instance *Instance) Set(key any, value any) {
 	instance.value[key] = value
 }
 
-type Class struct {
-	StaticMethods Property
-	methods       []statement.Statement
+func (instance *Instance) Has(key any) bool {
+	if _, ok := instance.value[key]; ok {
+		return true
+	}
+	return false
 }
 
-func NewClass(methods []statement.Statement) Callable {
+type Class struct {
+	methods []statement.Statement
+	value   map[any]any
+}
+
+func NewClass(methods []statement.Statement) ClassType {
 	return &Class{
-		StaticMethods: NewInstance(),
-		methods:       methods,
+		methods: methods,
+		value:   make(map[any]any),
 	}
+}
+
+func (class *Class) SetMethods(methods []statement.Statement) {
+	class.methods = methods
 }
 
 func (class *Class) Call(interpreter InterpreterMethods, params []any) any {
 	env := environment.New(interpreter.GetGlobal())
 	instance := NewInstance()
+	env.Define("this", instance)
 	for _, item := range class.methods {
 		if val, ok := item.(statement.FunctionStatement); ok {
-			instance.Set(val.Name.Lexeme, NewFunction(val.Body, val.Params, env))
+			if val.Name.Lexeme == "constructor" {
+				t := NewFunction(val.Body, val.Params, env)
+				t.Call(interpreter, params)
+			} else {
+				instance.Set(val.Name.Lexeme, NewFunction(val.Body, val.Params, env))
+			}
 		} else if val, ok := item.(statement.VariableStatement); ok {
 			var init any
 			if val.Initializer != nil {
@@ -57,4 +74,15 @@ func (class *Class) Call(interpreter InterpreterMethods, params []any) any {
 
 func (class *Class) String() string {
 	return ""
+}
+
+func (instance *Class) Get(key any) any {
+	if val, ok := instance.value[key]; ok {
+		return val
+	}
+	return nil
+}
+
+func (instance *Class) Set(key any, value any) {
+	instance.value[key] = value
 }

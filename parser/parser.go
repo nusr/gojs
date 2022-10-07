@@ -2,12 +2,26 @@ package parser
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/nusr/gojs/statement"
 	"github.com/nusr/gojs/token"
 )
 
 const maxParameterCount = 255
+
+var assignmentMap = map[token.Type]token.Type{
+	token.PlusEqual:     token.Plus,
+	token.MinusEqual:    token.Minus,
+	token.StarStarEqual: token.StarStar,
+	token.StarEqual:     token.Equal,
+	token.SlashEqual:    token.Slash,
+	token.PercentEqual:  token.Percent,
+	token.BitAndEqual:   token.BitAnd,
+	token.BitOrEqual:    token.BitOr,
+	token.AndEqual:      token.And,
+	token.OrEqual:       token.Or,
+}
 
 type Parser struct {
 	tokens  []token.Token
@@ -76,7 +90,7 @@ func (parser *Parser) match(tokenTypes ...token.Type) bool {
 	return false
 }
 
-func (parser *Parser) varDeclaration() statement.Statement {
+func (parser *Parser) varDeclaration(isStatic bool) statement.Statement {
 	name := parser.consume(token.Identifier, "expect identifier after var")
 	var initializer statement.Expression
 	if parser.match(token.Equal) {
@@ -86,6 +100,7 @@ func (parser *Parser) varDeclaration() statement.Statement {
 	return statement.VariableStatement{
 		Name:        name,
 		Initializer: initializer,
+		Static:      isStatic,
 	}
 }
 func (parser *Parser) primary() statement.Expression {
@@ -204,6 +219,7 @@ func (parser *Parser) call() statement.Expression {
 				Property: statement.TokenExpression{
 					Name: name,
 				},
+				IsSquare: false,
 			}
 		} else if parser.match(token.LeftSquare) {
 			name := parser.expression()
@@ -211,6 +227,7 @@ func (parser *Parser) call() statement.Expression {
 			expr = statement.GetExpression{
 				Object:   expr,
 				Property: name,
+				IsSquare: true,
 			}
 		} else if parser.match(token.LeftParen) {
 			expr = parser.finishCall(expr)
@@ -327,9 +344,33 @@ func (parser *Parser) or() statement.Expression {
 }
 func (parser *Parser) assignment() statement.Expression {
 	expr := parser.or()
-	if parser.match(token.Equal) {
+	operatorType, check := assignmentMap[parser.peek().Type]
+	if parser.match(token.Equal) || check {
+		if check {
+			parser.advance()
+		}
 		equal := parser.previous()
 		value := parser.assignment()
+		if check {
+			Operator := token.Token{
+				Type:   operatorType,
+				Lexeme: strings.Replace(equal.Lexeme, "=", "", 1),
+				Line:   equal.Line,
+			}
+			if equal.Type == token.AndEqual || equal.Type == token.OrEqual {
+				value = statement.LogicalExpression{
+					Left:     expr,
+					Operator: Operator,
+					Right:    value,
+				}
+			} else {
+				value = statement.BinaryExpression{
+					Left:     expr,
+					Operator: Operator,
+					Right:    value,
+				}
+			}
+		}
 		if val, ok := expr.(statement.VariableExpression); ok {
 			return statement.AssignExpression{
 				Name:  val.Name,
@@ -370,16 +411,6 @@ func (parser *Parser) ifStatement() statement.Statement {
 	}
 }
 
-func (parser *Parser) printStatement() statement.Statement {
-	expr := parser.expression()
-
-	parser.match(token.Semicolon)
-
-	return statement.PrintStatement{
-		Expression: expr,
-	}
-}
-
 func (parser *Parser) expressionStatement() statement.Statement {
 	expr := parser.expression()
 
@@ -402,13 +433,14 @@ func (parser *Parser) block() statement.BlockStatement {
 }
 
 func (parser *Parser) forStatement() statement.Statement {
+	name := parser.previous()
 	parser.consume(token.LeftParen, "expect (")
 
 	var initializer statement.Statement
 	if parser.match(token.Semicolon) {
 		initializer = nil
 	} else if parser.match(token.Var) {
-		initializer = parser.varDeclaration()
+		initializer = parser.varDeclaration(false)
 	} else {
 		initializer = parser.expressionStatement()
 	}
@@ -446,6 +478,7 @@ func (parser *Parser) forStatement() statement.Statement {
 	body = statement.WhileStatement{
 		Body:      body,
 		Condition: condition,
+		Name:      name,
 	}
 
 	if initializer != nil {
@@ -459,6 +492,7 @@ func (parser *Parser) forStatement() statement.Statement {
 	return body
 }
 func (parser *Parser) doWhile() statement.Statement {
+	name := parser.previous()
 	parser.consume(token.LeftBrace, "expect {")
 	body := parser.block()
 	parser.consume(token.While, "expect while")
@@ -471,11 +505,13 @@ func (parser *Parser) doWhile() statement.Statement {
 			statement.WhileStatement{
 				Body:      body,
 				Condition: condition,
+				Name:      name,
 			},
 		},
 	}
 }
 func (parser *Parser) while() statement.Statement {
+	name := parser.previous()
 	parser.consume(token.LeftParen, "expect ( after while")
 	condition := parser.expression()
 	parser.consume(token.RightParen, "expected ) after while")
@@ -483,6 +519,7 @@ func (parser *Parser) while() statement.Statement {
 	return statement.WhileStatement{
 		Condition: condition,
 		Body:      body,
+		Name:      name,
 	}
 }
 
@@ -540,7 +577,7 @@ func (parser *Parser) getTokenList() []token.Token {
 	return parameters
 }
 
-func (parser *Parser) functionDeclaration() statement.FunctionStatement {
+func (parser *Parser) functionDeclaration(isStatic bool) statement.FunctionStatement {
 	name := parser.consume(token.Identifier, "expect name")
 	parser.consume(token.LeftParen, "expect (")
 	parameters := parser.getTokenList()
@@ -551,6 +588,7 @@ func (parser *Parser) functionDeclaration() statement.FunctionStatement {
 		Name:   name,
 		Params: parameters,
 		Body:   body,
+		Static: isStatic,
 	}
 }
 
@@ -558,10 +596,11 @@ func (parser *Parser) getClassBody() []statement.Statement {
 	parser.consume(token.LeftBrace, "expect {")
 	var methods []statement.Statement
 	for !parser.check(token.RightBrace) && !parser.isAtEnd() {
+		isStatic := parser.match(token.Static)
 		if parser.checkNext(token.LeftParen) {
-			methods = append(methods, parser.functionDeclaration())
+			methods = append(methods, parser.functionDeclaration(isStatic))
 		} else {
-			methods = append(methods, parser.varDeclaration())
+			methods = append(methods, parser.varDeclaration(isStatic))
 		}
 	}
 	parser.consume(token.RightBrace, "expect }")
@@ -591,10 +630,10 @@ func (parser *Parser) declaration() statement.Statement {
 		return parser.classDeclaration()
 	}
 	if parser.match(token.Function) {
-		return parser.functionDeclaration()
+		return parser.functionDeclaration(false)
 	}
 	if parser.match(token.Var) {
-		return parser.varDeclaration()
+		return parser.varDeclaration(false)
 	}
 
 	return parser.statement()

@@ -21,12 +21,13 @@ var KeywordMap = map[string]token.Type{
 	"null":     token.Null,
 	"return":   token.Return,
 	"super":    token.Super,
-	"this":     token.This,
-	"true":     token.True,
-	"var":      token.Var,
-	"while":    token.While,
-	"do":       token.Do,
-	"new":      token.New,
+	// "this":     token.This,
+	"true":   token.True,
+	"var":    token.Var,
+	"while":  token.While,
+	"do":     token.Do,
+	"new":    token.New,
+	"static": token.Static,
 }
 
 type Scanner struct {
@@ -39,7 +40,7 @@ type Scanner struct {
 
 func New(source string) *Scanner {
 	return &Scanner{
-		source:  []rune(source),
+		source:  []rune(source), // unicode support
 		tokens:  []token.Token{},
 		start:   0,
 		current: 0,
@@ -76,11 +77,6 @@ func (scanner *Scanner) getSubString(start int, end int) string {
 	return text
 }
 
-func (scanner *Scanner) addOneToken(tokenType token.Type) {
-	text := scanner.getSubString(scanner.start, scanner.current)
-	scanner.appendToken(tokenType, text)
-}
-
 func (scanner *Scanner) appendToken(tokenType token.Type, text string) {
 	scanner.tokens = append(scanner.tokens, token.Token{
 		Type:   tokenType,
@@ -90,7 +86,8 @@ func (scanner *Scanner) appendToken(tokenType token.Type, text string) {
 }
 
 func (scanner *Scanner) addToken(tokenType token.Type) {
-	scanner.addOneToken(tokenType)
+	text := scanner.getSubString(scanner.start, scanner.current)
+	scanner.appendToken(tokenType, text)
 }
 func (scanner *Scanner) match(char rune) bool {
 	if scanner.isAtEnd() {
@@ -139,8 +136,7 @@ func (scanner *Scanner) string(end rune) {
 		scanner.advance()
 	}
 	if scanner.isAtEnd() {
-		fmt.Println("unterminated string")
-		return
+		panic("unterminated string")
 	}
 	scanner.advance() // skip "
 	text := scanner.getSubString(scanner.start+1, scanner.current-1)
@@ -181,12 +177,16 @@ func (scanner *Scanner) scanToken() {
 	case '-':
 		if scanner.match('-') {
 			scanner.addToken(token.MinusMinus)
+		} else if scanner.match('=') {
+			scanner.addToken(token.MinusEqual)
 		} else {
 			scanner.addToken(token.Minus)
 		}
 	case '+':
 		if scanner.match('+') {
 			scanner.addToken(token.PlusPlus)
+		} else if scanner.match('=') {
+			scanner.addToken(token.PlusEqual)
 		} else {
 			scanner.addToken(token.Plus)
 		}
@@ -195,32 +195,66 @@ func (scanner *Scanner) scanToken() {
 	case ':':
 		scanner.addToken(token.Colon)
 	case '%':
-		scanner.addToken(token.Percent)
+		if scanner.match('=') {
+			scanner.addToken(token.PercentEqual)
+		} else {
+			scanner.addToken(token.Percent)
+		}
 	case '?':
 		scanner.addToken(token.Mark)
 	case '&':
 		if scanner.match('&') {
-			scanner.addToken(token.And)
+			if scanner.match('=') {
+				scanner.addToken(token.AndEqual)
+			} else {
+				scanner.addToken(token.And)
+			}
+		} else if scanner.match('=') {
+			scanner.addToken(token.BitAndEqual)
 		} else {
 			scanner.addToken(token.BitAnd)
 		}
 	case '|':
 		if scanner.match('|') {
-			scanner.addToken(token.Or)
+			if scanner.match('=') {
+				scanner.addToken(token.OrEqual)
+			} else {
+				scanner.addToken(token.Or)
+			}
+		} else if scanner.match('=') {
+			scanner.addToken(token.BitOrEqual)
 		} else {
 			scanner.addToken(token.BitOr)
 		}
 	case '*':
-		scanner.addToken(token.Star)
+		if scanner.match('=') {
+			scanner.addToken(token.StarEqual)
+		} else if scanner.match('*') {
+			if scanner.match('=') {
+				scanner.addToken(token.StarStarEqual)
+			} else {
+				scanner.addToken(token.StarStar)
+			}
+		} else {
+			scanner.addToken(token.Star)
+		}
 	case '!':
 		if scanner.match('=') {
-			scanner.addToken(token.BangEqual)
+			if scanner.match('=') {
+				scanner.addToken(token.BangEqualEqual)
+			} else {
+				scanner.addToken(token.BangEqual)
+			}
 		} else {
 			scanner.addToken(token.Bang)
 		}
 	case '=':
 		if scanner.match('=') {
-			scanner.addToken(token.EqualEqual)
+			if scanner.match('=') {
+				scanner.addToken(token.EqualEqualEqual)
+			} else {
+				scanner.addToken(token.EqualEqual)
+			}
 		} else {
 			scanner.addToken(token.Equal)
 		}
@@ -241,6 +275,8 @@ func (scanner *Scanner) scanToken() {
 			for scanner.peek() != '\n' && !scanner.isAtEnd() {
 				scanner.advance()
 			}
+		} else if scanner.match('=') {
+			scanner.addToken(token.SlashEqual)
 		} else if scanner.match('*') {
 			for !((scanner.peek() == '*' && scanner.peekNext() == '/') || scanner.isAtEnd()) {
 				scanner.advance()
