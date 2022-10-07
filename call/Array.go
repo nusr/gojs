@@ -5,21 +5,48 @@ type Array struct {
 }
 
 func NewArray() Property {
-	list := make([]any, 100)
 	return &Array{
-		value: list,
+		value: []any{},
+	}
+}
+
+func convertAnyToInt(index any) int64 {
+	switch data := index.(type) {
+	case int8:
+		return int64(data)
+	case int16:
+		return int64(data)
+	case int32:
+		return int64(data)
+	case int:
+		return int64(data)
+	case int64:
+		return data
+	case float32:
+		return int64(data)
+	case float64:
+		return int64(data)
+	default:
+		return -1
 	}
 }
 
 func (array *Array) Get(index any) any {
-	if val, ok := index.(int64); ok {
-		return array.value[val]
+	i := convertAnyToInt(index)
+	if i >= 0 && i <= int64(len(array.value)-1) {
+		return array.value[i]
 	}
 	return nil
 }
 
 func (array *Array) Set(index any, value any) {
-	if val, ok := index.(int64); ok {
-		array.value[val] = value
+	i := convertAnyToInt(index)
+	if i >= 0 && i <= int64(len(array.value)-1) {
+		array.value[i] = value
+	} else if i > int64(len(array.value)-1) {
+		t := make([]any, i+1)
+		copy(t, array.value)
+		array.value = t
+		array.value[i] = value
 	}
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/nusr/gojs/token"
 )
 
-func TestParser(t *testing.T) {
+func TestFunction(t *testing.T) {
 
 	source := `
 	var a = 1;

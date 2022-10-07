@@ -2,6 +2,7 @@ package scanner
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/nusr/gojs/token"
 )
@@ -106,8 +107,12 @@ func (scanner *Scanner) isDigit(c rune) bool {
 	return c >= '0' && c <= '9'
 }
 
-func (scanner *Scanner) isAlpha(c rune) bool {
-	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '\\' || c == '_' || c == '$' || c == '#' || (c >= '\u4e00' && c <= '\u9fa5')
+func (scanner *Scanner) isWhiteSpace(c rune) bool {
+	return c == ' ' || c == '\r' || c == '\n' || c == '\t'
+}
+
+func (scanner *Scanner) isIdentifierChar(c rune) bool {
+	return !scanner.isAtEnd() && !scanner.isWhiteSpace(c) && !strings.ContainsRune("[]{}(),.+-*/%;:?&|!=><\"'", c)
 }
 
 func (scanner *Scanner) number() {
@@ -143,7 +148,7 @@ func (scanner *Scanner) string(end rune) {
 }
 
 func (scanner *Scanner) identifier() {
-	for scanner.isAlpha(scanner.peek()) {
+	for scanner.isIdentifierChar(scanner.peek()) {
 		scanner.advance()
 	}
 	text := scanner.getSubString(scanner.start, scanner.current)
@@ -246,7 +251,9 @@ func (scanner *Scanner) scanToken() {
 			scanner.addToken(token.Slash)
 		}
 	case ' ':
+		break
 	case '\r':
+		break
 	case '\t':
 		break
 	case '\n':
@@ -258,7 +265,7 @@ func (scanner *Scanner) scanToken() {
 	default:
 		if scanner.isDigit(c) {
 			scanner.number()
-		} else if scanner.isAlpha(c) {
+		} else if scanner.isIdentifierChar(c) {
 			scanner.identifier()
 		} else {
 			fmt.Printf("Unexpected character:%c\n", c)

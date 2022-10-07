@@ -14,6 +14,11 @@ func TestScanner(t *testing.T) {
 	true
 	false
 	console.log(null);
+	var 测试 = '测试';
+	function add(a, b) {
+		return a + b
+	}
+	add(1,2)
 	`
 	scanner := New(source)
 	tokens := scanner.Scan()
@@ -69,6 +74,102 @@ func TestScanner(t *testing.T) {
 		{
 			token.Semicolon,
 			";",
+		},
+		{
+			token.Var,
+			"var",
+		},
+		{
+			token.Identifier,
+			"测试",
+		},
+		{
+			token.Equal,
+			"=",
+		},
+		{
+			token.String,
+			"测试",
+		},
+		{
+			token.Semicolon,
+			";",
+		},
+		{
+			token.Function,
+			"function",
+		},
+		{
+			token.Identifier,
+			"add",
+		},
+		{
+			token.LeftParen,
+			"(",
+		},
+		{
+			token.Identifier,
+			"a",
+		},
+		{
+			token.Comma,
+			",",
+		},
+		{
+			token.Identifier,
+			"b",
+		},
+		{
+			token.RightParen,
+			")",
+		},
+		{
+			token.LeftBrace,
+			"{",
+		},
+		{
+			token.Return,
+			"return",
+		},
+		{
+			token.Identifier,
+			"a",
+		},
+		{
+			token.Plus,
+			"+",
+		},
+		{
+			token.Identifier,
+			"b",
+		},
+		{
+			token.RightBrace,
+			"}",
+		},
+		{
+			token.Identifier,
+			"add",
+		},
+		{
+			token.LeftParen,
+			"(",
+		},
+		{
+			token.Int64,
+			"1",
+		},
+		{
+			token.Comma,
+			",",
+		},
+		{
+			token.Int64,
+			"2",
+		},
+		{
+			token.RightParen,
+			")",
 		},
 		{
 			token.EOF,

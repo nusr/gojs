@@ -172,7 +172,11 @@ func (parser *Parser) getExpressionList(tokenType token.Type) []statement.Expres
 		if parser.check(tokenType) {
 			break
 		}
-		params = append(params, parser.expression())
+		if parser.match(token.Comma) {
+			params = append(params, nil)
+		} else {
+			params = append(params, parser.expression())
+		}
 		if tokenType == token.RightParen {
 			count++
 			if count > maxParameterCount {
@@ -521,6 +525,9 @@ func (parser *Parser) getTokenList() []token.Token {
 		count := 0
 		for ok := true; ok; ok = parser.match(token.Comma) {
 			if parser.check(token.RightParen) {
+				break
+			}
+			if parser.match(token.Comma) {
 				break
 			}
 			parameters = append(parameters, parser.consume(token.Identifier, "expect parameter name"))

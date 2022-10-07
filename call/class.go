@@ -23,9 +23,7 @@ func (instance *Instance) Get(key any) any {
 }
 
 func (instance *Instance) Set(key any, value any) {
-	if _, ok := instance.value[key]; ok {
-		instance.value[key] = value
-	}
+	instance.value[key] = value
 }
 
 type Class struct {

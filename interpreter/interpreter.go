@@ -524,7 +524,7 @@ func (interpreter *Interpreter) VisitArrayLiteralExpression(expression statement
 	instance := call.NewArray()
 	for i, item := range expression.Elements {
 		value := interpreter.Evaluate(item)
-		instance.Set(int64(i), value)
+		instance.Set(i, value)
 	}
 	return instance
 }
