@@ -1,15 +1,17 @@
-package call
+package types
 
 import (
-	"github.com/nusr/gojs/environment"
 	"github.com/nusr/gojs/statement"
 )
 
 type InterpreterMethods interface {
-	GetGlobal() (globals *environment.Environment)
+	statement.StatementVisitor
+	statement.ExpressionVisitor
+	Interpret(list []statement.Statement) any
+	GetGlobal() (globals Environment)
 	Execute(statement statement.Statement) any
 	Evaluate(expression statement.Expression) any
-	ExecuteBlock(statement statement.BlockStatement, environment *environment.Environment) (result any)
+	ExecuteBlock(statement statement.BlockStatement, environment Environment) (result any)
 }
 
 type Callable interface {

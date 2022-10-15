@@ -4,15 +4,16 @@ import (
 	"github.com/nusr/gojs/environment"
 	"github.com/nusr/gojs/statement"
 	"github.com/nusr/gojs/token"
+	"github.com/nusr/gojs/types"
 )
 
 type Function struct {
-	env    *environment.Environment
+	env    types.Environment
 	body   statement.BlockStatement
 	params []token.Token
 }
 
-func NewFunction(body statement.BlockStatement, params []token.Token, env *environment.Environment) Callable {
+func NewFunction(body statement.BlockStatement, params []token.Token, env types.Environment) types.Callable {
 	return &Function{
 		body:   body,
 		params: params,
@@ -20,7 +21,7 @@ func NewFunction(body statement.BlockStatement, params []token.Token, env *envir
 	}
 }
 
-func (function *Function) Call(interpreter InterpreterMethods, params []any) any {
+func (function *Function) Call(interpreter types.InterpreterMethods, params []any) any {
 	env := environment.New(function.env)
 	paramsLen := len(params)
 	for i, item := range function.params {

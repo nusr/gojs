@@ -3,13 +3,14 @@ package call
 import (
 	"github.com/nusr/gojs/environment"
 	"github.com/nusr/gojs/statement"
+	"github.com/nusr/gojs/types"
 )
 
 type Instance struct {
 	value map[any]any
 }
 
-func NewInstance() Property {
+func NewInstance() types.Property {
 	return &Instance{
 		value: make(map[any]any),
 	}
@@ -38,7 +39,7 @@ type Class struct {
 	value   map[any]any
 }
 
-func NewClass(methods []statement.Statement) ClassType {
+func NewClass(methods []statement.Statement) types.ClassType {
 	return &Class{
 		methods: methods,
 		value:   make(map[any]any),
@@ -49,7 +50,7 @@ func (class *Class) SetMethods(methods []statement.Statement) {
 	class.methods = methods
 }
 
-func (class *Class) Call(interpreter InterpreterMethods, params []any) any {
+func (class *Class) Call(interpreter types.InterpreterMethods, params []any) any {
 	env := environment.New(interpreter.GetGlobal())
 	instance := NewInstance()
 	env.Define("this", instance)

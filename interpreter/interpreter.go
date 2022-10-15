@@ -10,6 +10,7 @@ import (
 	"github.com/nusr/gojs/flow"
 	"github.com/nusr/gojs/statement"
 	"github.com/nusr/gojs/token"
+	"github.com/nusr/gojs/types"
 )
 
 const (
@@ -73,13 +74,13 @@ func convertLtoF(left any, right any) (float64, float64, bool) {
 }
 
 type Interpreter struct {
-	environment     *environment.Environment
-	globals         *environment.Environment
+	environment     types.Environment
+	globals         types.Environment
 	lastObjectKey   any
-	lastObjectValue call.Property
+	lastObjectValue types.Property
 }
 
-func New(environment *environment.Environment) *Interpreter {
+func New(environment types.Environment) types.InterpreterMethods {
 	return &Interpreter{
 		environment:     environment,
 		globals:         environment,
@@ -87,7 +88,7 @@ func New(environment *environment.Environment) *Interpreter {
 		lastObjectValue: nil,
 	}
 }
-func (interpreter *Interpreter) GetGlobal() *environment.Environment {
+func (interpreter *Interpreter) GetGlobal() types.Environment {
 	return interpreter.globals
 }
 func (interpreter *Interpreter) Interpret(list []statement.Statement) any {
@@ -140,7 +141,7 @@ func (interpreter *Interpreter) isTruth(value any) bool {
 	return result
 }
 
-func (interpreter *Interpreter) ExecuteBlock(statement statement.BlockStatement, environment *environment.Environment) (result any) {
+func (interpreter *Interpreter) ExecuteBlock(statement statement.BlockStatement, environment types.Environment) (result any) {
 	previous := interpreter.environment
 	interpreter.environment = environment
 	for _, t := range statement.Statements {
@@ -170,7 +171,7 @@ func (interpreter *Interpreter) VisitBlockStatement(statement statement.BlockSta
 	return interpreter.ExecuteBlock(statement, environment.New(interpreter.environment))
 }
 
-func (interpreter *Interpreter) getClassBody(methods []statement.Statement) call.ClassType {
+func (interpreter *Interpreter) getClassBody(methods []statement.Statement) types.ClassType {
 	class := call.NewClass([]statement.Statement{})
 	var result []statement.Statement
 	for _, item := range methods {
@@ -434,7 +435,7 @@ func (interpreter *Interpreter) VisitCallExpression(expression statement.CallExp
 	for _, item := range expression.Arguments {
 		params = append(params, interpreter.Evaluate(item))
 	}
-	val, ok := callable.(call.Callable)
+	val, ok := callable.(types.Callable)
 	fmt.Printf("Type of %v is %T, bool: %v", callable, callable, ok)
 	if ok {
 		return val.Call(interpreter, params)
@@ -444,7 +445,7 @@ func (interpreter *Interpreter) VisitCallExpression(expression statement.CallExp
 func (interpreter *Interpreter) VisitGetExpression(expression statement.GetExpression) any {
 	result := interpreter.Evaluate(expression.Object)
 	key := interpreter.Evaluate(expression.Property)
-	if val, ok := result.(call.Property); ok {
+	if val, ok := result.(types.Property); ok {
 		interpreter.lastObjectKey = key
 		interpreter.lastObjectValue = val
 		return val.Get(key)

@@ -1,10 +1,12 @@
 package call
 
+import "github.com/nusr/gojs/types"
+
 type Array struct {
 	value []any
 }
 
-func NewArray() Property {
+func NewArray() types.Property {
 	return &Array{
 		value: []any{},
 	}

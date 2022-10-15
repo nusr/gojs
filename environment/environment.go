@@ -1,19 +1,23 @@
 package environment
 
-type Environment struct {
-	parent *Environment
+import (
+	"github.com/nusr/gojs/types"
+)
+
+type environmentData struct {
+	parent types.Environment
 	values map[string]any
 }
 
-func New(parent *Environment) *Environment {
+func New(parent types.Environment) types.Environment {
 	values := make(map[string]any)
-	return &Environment{
+	return &environmentData{
 		parent: parent,
 		values: values,
 	}
 }
 
-func (environment *Environment) Get(key string) any {
+func (environment *environmentData) Get(key string) any {
 	if val, ok := environment.values[key]; ok {
 		return val
 	}
@@ -22,11 +26,11 @@ func (environment *Environment) Get(key string) any {
 	}
 	return nil
 }
-func (environment *Environment) Define(name string, value any) {
+func (environment *environmentData) Define(name string, value any) {
 	environment.values[name] = value
 }
 
-func (environment *Environment) Assign(key string, value any) {
+func (environment *environmentData) Assign(key string, value any) {
 	if _, ok := environment.values[key]; ok {
 		environment.Define(key, value)
 		return
