@@ -4,20 +4,20 @@ import (
 	"github.com/nusr/gojs/types"
 )
 
-type environmentData struct {
+type environmentImpl struct {
 	parent types.Environment
 	values map[string]any
 }
 
 func New(parent types.Environment) types.Environment {
 	values := make(map[string]any)
-	return &environmentData{
+	return &environmentImpl{
 		parent: parent,
 		values: values,
 	}
 }
 
-func (environment *environmentData) Get(key string) any {
+func (environment *environmentImpl) Get(key string) any {
 	if val, ok := environment.values[key]; ok {
 		return val
 	}
@@ -26,11 +26,11 @@ func (environment *environmentData) Get(key string) any {
 	}
 	return nil
 }
-func (environment *environmentData) Define(name string, value any) {
+func (environment *environmentImpl) Define(name string, value any) {
 	environment.values[name] = value
 }
 
-func (environment *environmentData) Assign(key string, value any) {
+func (environment *environmentImpl) Assign(key string, value any) {
 	if _, ok := environment.values[key]; ok {
 		environment.Define(key, value)
 		return

@@ -2,12 +2,12 @@ package call
 
 import "github.com/nusr/gojs/types"
 
-type Array struct {
+type arrayImpl struct {
 	value []any
 }
 
 func NewArray() types.Property {
-	return &Array{
+	return &arrayImpl{
 		value: []any{},
 	}
 }
@@ -33,7 +33,7 @@ func convertAnyToInt(index any) int64 {
 	}
 }
 
-func (array *Array) Get(index any) any {
+func (array *arrayImpl) Get(index any) any {
 	i := convertAnyToInt(index)
 	if i >= 0 && i <= int64(len(array.value)-1) {
 		return array.value[i]
@@ -41,7 +41,7 @@ func (array *Array) Get(index any) any {
 	return nil
 }
 
-func (array *Array) Set(index any, value any) {
+func (array *arrayImpl) Set(index any, value any) {
 	i := convertAnyToInt(index)
 	if i >= 0 && i <= int64(len(array.value)-1) {
 		array.value[i] = value
@@ -53,7 +53,7 @@ func (array *Array) Set(index any, value any) {
 	}
 }
 
-func (array *Array) Has(index any) bool {
+func (array *arrayImpl) Has(index any) bool {
 	i := convertAnyToInt(index)
 	if i >= 0 && i <= int64(len(array.value)-1) {
 		return true

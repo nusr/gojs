@@ -17,3 +17,5 @@
 .vscode
 coverage
 coverageFile
+gojs
+gojs.*

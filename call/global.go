@@ -6,24 +6,24 @@ import (
 	"github.com/nusr/gojs/types"
 )
 
-type GlobalFunction struct {
+type globalImpl struct {
 	name string
 }
 
-func NewGlobal(name string) types.Callable {
-	return &GlobalFunction{
+func NewGlobal(name string) types.Function {
+	return &globalImpl{
 		name: name,
 	}
 }
 
-func (g *GlobalFunction) Call(interpreter types.InterpreterMethods, params []any) any {
+func (g *globalImpl) Call(interpreter types.Interpreter, params []any) any {
 	if g.name == "console.log" {
 		fmt.Println(params...)
 	}
 	return nil
 }
 
-func (g *GlobalFunction) String() string {
+func (g *globalImpl) String() string {
 	return ""
 }
 

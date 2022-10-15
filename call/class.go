@@ -6,51 +6,51 @@ import (
 	"github.com/nusr/gojs/types"
 )
 
-type Instance struct {
+type instanceImpl struct {
 	value map[any]any
 }
 
 func NewInstance() types.Property {
-	return &Instance{
+	return &instanceImpl{
 		value: make(map[any]any),
 	}
 }
 
-func (instance *Instance) Get(key any) any {
+func (instance *instanceImpl) Get(key any) any {
 	if val, ok := instance.value[key]; ok {
 		return val
 	}
 	return nil
 }
 
-func (instance *Instance) Set(key any, value any) {
+func (instance *instanceImpl) Set(key any, value any) {
 	instance.value[key] = value
 }
 
-func (instance *Instance) Has(key any) bool {
+func (instance *instanceImpl) Has(key any) bool {
 	if _, ok := instance.value[key]; ok {
 		return true
 	}
 	return false
 }
 
-type Class struct {
+type classImpl struct {
 	methods []statement.Statement
 	value   map[any]any
 }
 
-func NewClass(methods []statement.Statement) types.ClassType {
-	return &Class{
+func NewClass(methods []statement.Statement) types.Class {
+	return &classImpl{
 		methods: methods,
 		value:   make(map[any]any),
 	}
 }
 
-func (class *Class) SetMethods(methods []statement.Statement) {
+func (class *classImpl) SetMethods(methods []statement.Statement) {
 	class.methods = methods
 }
 
-func (class *Class) Call(interpreter types.InterpreterMethods, params []any) any {
+func (class *classImpl) Call(interpreter types.Interpreter, params []any) any {
 	env := environment.New(interpreter.GetGlobal())
 	instance := NewInstance()
 	env.Define("this", instance)
@@ -73,17 +73,17 @@ func (class *Class) Call(interpreter types.InterpreterMethods, params []any) any
 	return instance
 }
 
-func (class *Class) String() string {
+func (class *classImpl) String() string {
 	return ""
 }
 
-func (instance *Class) Get(key any) any {
+func (instance *classImpl) Get(key any) any {
 	if val, ok := instance.value[key]; ok {
 		return val
 	}
 	return nil
 }
 
-func (instance *Class) Set(key any, value any) {
+func (instance *classImpl) Set(key any, value any) {
 	instance.value[key] = value
 }

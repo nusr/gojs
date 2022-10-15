@@ -73,25 +73,25 @@ func convertLtoF(left any, right any) (float64, float64, bool) {
 	return a, b, count >= 2
 }
 
-type Interpreter struct {
+type interpreterImpl struct {
 	environment     types.Environment
 	globals         types.Environment
 	lastObjectKey   any
 	lastObjectValue types.Property
 }
 
-func New(environment types.Environment) types.InterpreterMethods {
-	return &Interpreter{
+func New(environment types.Environment) types.Interpreter {
+	return &interpreterImpl{
 		environment:     environment,
 		globals:         environment,
 		lastObjectKey:   "",
 		lastObjectValue: nil,
 	}
 }
-func (interpreter *Interpreter) GetGlobal() types.Environment {
+func (interpreter *interpreterImpl) GetGlobal() types.Environment {
 	return interpreter.globals
 }
-func (interpreter *Interpreter) Interpret(list []statement.Statement) any {
+func (interpreter *interpreterImpl) Interpret(list []statement.Statement) any {
 	var result any
 	for _, item := range list {
 		result = interpreter.Execute(item)
@@ -102,14 +102,14 @@ func (interpreter *Interpreter) Interpret(list []statement.Statement) any {
 	return result
 }
 
-func (interpreter *Interpreter) Execute(statement statement.Statement) any {
+func (interpreter *interpreterImpl) Execute(statement statement.Statement) any {
 	if statement == nil {
 		return nil
 	}
 	return statement.Accept(interpreter)
 }
 
-func (interpreter *Interpreter) Evaluate(expression statement.Expression) any {
+func (interpreter *interpreterImpl) Evaluate(expression statement.Expression) any {
 	if expression == nil {
 		return nil
 	}
@@ -120,7 +120,7 @@ func (interpreter *Interpreter) Evaluate(expression statement.Expression) any {
 	return t
 }
 
-func (interpreter *Interpreter) isTruth(value any) bool {
+func (interpreter *interpreterImpl) isTruth(value any) bool {
 	if value == true {
 		return true
 	}
@@ -141,7 +141,7 @@ func (interpreter *Interpreter) isTruth(value any) bool {
 	return result
 }
 
-func (interpreter *Interpreter) ExecuteBlock(statement statement.BlockStatement, environment types.Environment) (result any) {
+func (interpreter *interpreterImpl) ExecuteBlock(statement statement.BlockStatement, environment types.Environment) (result any) {
 	previous := interpreter.environment
 	interpreter.environment = environment
 	for _, t := range statement.Statements {
@@ -155,10 +155,10 @@ func (interpreter *Interpreter) ExecuteBlock(statement statement.BlockStatement,
 	return result
 }
 
-func (interpreter *Interpreter) VisitExpressionStatement(statement statement.ExpressionStatement) any {
+func (interpreter *interpreterImpl) VisitExpressionStatement(statement statement.ExpressionStatement) any {
 	return interpreter.Evaluate(statement.Expression)
 }
-func (interpreter *Interpreter) VisitVariableStatement(statement statement.VariableStatement) any {
+func (interpreter *interpreterImpl) VisitVariableStatement(statement statement.VariableStatement) any {
 	if statement.Initializer != nil {
 		value := interpreter.Evaluate(statement.Initializer)
 		interpreter.environment.Define(statement.Name.Lexeme, value)
@@ -167,11 +167,11 @@ func (interpreter *Interpreter) VisitVariableStatement(statement statement.Varia
 	}
 	return nil
 }
-func (interpreter *Interpreter) VisitBlockStatement(statement statement.BlockStatement) any {
+func (interpreter *interpreterImpl) VisitBlockStatement(statement statement.BlockStatement) any {
 	return interpreter.ExecuteBlock(statement, environment.New(interpreter.environment))
 }
 
-func (interpreter *Interpreter) getClassBody(methods []statement.Statement) types.ClassType {
+func (interpreter *interpreterImpl) getClassBody(methods []statement.Statement) types.Class {
 	class := call.NewClass([]statement.Statement{})
 	var result []statement.Statement
 	for _, item := range methods {
@@ -193,17 +193,17 @@ func (interpreter *Interpreter) getClassBody(methods []statement.Statement) type
 	return class
 }
 
-func (interpreter *Interpreter) VisitClassStatement(statement statement.ClassStatement) any {
+func (interpreter *interpreterImpl) VisitClassStatement(statement statement.ClassStatement) any {
 	class := interpreter.getClassBody(statement.Methods)
 	interpreter.environment.Define(statement.Name.Lexeme, class)
 	return nil
 }
-func (interpreter *Interpreter) VisitFunctionStatement(statement statement.FunctionStatement) any {
+func (interpreter *interpreterImpl) VisitFunctionStatement(statement statement.FunctionStatement) any {
 	interpreter.environment.Define(statement.Name.Lexeme, call.NewFunction(statement.Body, statement.Params, interpreter.environment))
 	return nil
 }
 
-func (interpreter *Interpreter) VisitIfStatement(statement statement.IfStatement) (result any) {
+func (interpreter *interpreterImpl) VisitIfStatement(statement statement.IfStatement) (result any) {
 	if interpreter.isTruth(interpreter.Evaluate(statement.Condition)) {
 		result = interpreter.Execute(statement.ThenBranch)
 	} else if statement.ElseBranch != nil {
@@ -215,11 +215,11 @@ func (interpreter *Interpreter) VisitIfStatement(statement statement.IfStatement
 	return nil
 }
 
-func (interpreter *Interpreter) VisitReturnStatement(statement statement.ReturnStatement) any {
+func (interpreter *interpreterImpl) VisitReturnStatement(statement statement.ReturnStatement) any {
 	value := interpreter.Evaluate(statement.Value)
 	return flow.NewReturnValue(value)
 }
-func (interpreter *Interpreter) VisitWhileStatement(statement statement.WhileStatement) any {
+func (interpreter *interpreterImpl) VisitWhileStatement(statement statement.WhileStatement) any {
 	for interpreter.isTruth(interpreter.Evaluate(statement.Condition)) {
 		t := interpreter.Execute(statement.Body)
 		if val, ok := t.(flow.Return); ok {
@@ -229,10 +229,10 @@ func (interpreter *Interpreter) VisitWhileStatement(statement statement.WhileSta
 	return nil
 }
 
-func (interpreter *Interpreter) VisitVariableExpression(expression statement.VariableExpression) any {
+func (interpreter *interpreterImpl) VisitVariableExpression(expression statement.VariableExpression) any {
 	return interpreter.environment.Get(expression.Name.Lexeme)
 }
-func (interpreter *Interpreter) VisitLiteralExpression(expr statement.LiteralExpression) any {
+func (interpreter *interpreterImpl) VisitLiteralExpression(expr statement.LiteralExpression) any {
 	switch expr.Type {
 	case token.Null:
 		return nil
@@ -262,7 +262,7 @@ func (interpreter *Interpreter) VisitLiteralExpression(expr statement.LiteralExp
 	return nil
 }
 
-func (interpreter *Interpreter) VisitBinaryExpression(expression statement.BinaryExpression) any {
+func (interpreter *interpreterImpl) VisitBinaryExpression(expression statement.BinaryExpression) any {
 	left := interpreter.Evaluate(expression.Left)
 	right := interpreter.Evaluate(expression.Right)
 	switch expression.Operator.Type {
@@ -429,20 +429,20 @@ func (interpreter *Interpreter) VisitBinaryExpression(expression statement.Binar
 	return nil
 }
 
-func (interpreter *Interpreter) VisitCallExpression(expression statement.CallExpression) any {
+func (interpreter *interpreterImpl) VisitCallExpression(expression statement.CallExpression) any {
 	callable := interpreter.Evaluate(expression.Callee)
 	var params []any
 	for _, item := range expression.Arguments {
 		params = append(params, interpreter.Evaluate(item))
 	}
-	val, ok := callable.(types.Callable)
+	val, ok := callable.(types.Function)
 	fmt.Printf("Type of %v is %T, bool: %v", callable, callable, ok)
 	if ok {
 		return val.Call(interpreter, params)
 	}
 	panic(any("can only call function and call"))
 }
-func (interpreter *Interpreter) VisitGetExpression(expression statement.GetExpression) any {
+func (interpreter *interpreterImpl) VisitGetExpression(expression statement.GetExpression) any {
 	result := interpreter.Evaluate(expression.Object)
 	key := interpreter.Evaluate(expression.Property)
 	if val, ok := result.(types.Property); ok {
@@ -452,7 +452,7 @@ func (interpreter *Interpreter) VisitGetExpression(expression statement.GetExpre
 	}
 	return nil
 }
-func (interpreter *Interpreter) VisitSetExpression(expression statement.SetExpression) any {
+func (interpreter *interpreterImpl) VisitSetExpression(expression statement.SetExpression) any {
 	interpreter.lastObjectKey = ""
 	interpreter.lastObjectValue = nil
 	interpreter.Evaluate(expression.Object)
@@ -465,7 +465,7 @@ func (interpreter *Interpreter) VisitSetExpression(expression statement.SetExpre
 	}
 	return nil
 }
-func (interpreter *Interpreter) VisitLogicalExpression(expression statement.LogicalExpression) any {
+func (interpreter *interpreterImpl) VisitLogicalExpression(expression statement.LogicalExpression) any {
 	left := interpreter.Evaluate(expression.Left)
 	check := interpreter.isTruth(left)
 	if expression.Operator.Type == token.And {
@@ -480,21 +480,21 @@ func (interpreter *Interpreter) VisitLogicalExpression(expression statement.Logi
 	return interpreter.Evaluate(expression.Right)
 }
 
-func (interpreter *Interpreter) VisitSuperExpression(expression statement.SuperExpression) any {
+func (interpreter *interpreterImpl) VisitSuperExpression(expression statement.SuperExpression) any {
 	// TODO
 	return nil
 }
 
-func (interpreter *Interpreter) VisitGroupingExpression(expression statement.GroupingExpression) any {
+func (interpreter *interpreterImpl) VisitGroupingExpression(expression statement.GroupingExpression) any {
 	result := interpreter.Evaluate(expression.Expression)
 	return result
 }
 
-func (interpreter *Interpreter) VisitThisExpression(expression statement.ThisExpression) any {
+func (interpreter *interpreterImpl) VisitThisExpression(expression statement.ThisExpression) any {
 	// TODO
 	return nil
 }
-func (interpreter *Interpreter) VisitUnaryExpression(expression statement.UnaryExpression) any {
+func (interpreter *interpreterImpl) VisitUnaryExpression(expression statement.UnaryExpression) any {
 	result := interpreter.Evaluate(expression.Right)
 	switch expression.Operator.Type {
 	case token.PlusPlus:
@@ -555,25 +555,25 @@ func (interpreter *Interpreter) VisitUnaryExpression(expression statement.UnaryE
 	return nil
 }
 
-func (interpreter *Interpreter) VisitAssignExpression(expression statement.AssignExpression) any {
+func (interpreter *interpreterImpl) VisitAssignExpression(expression statement.AssignExpression) any {
 	temp := interpreter.Evaluate(expression.Value)
 	interpreter.environment.Assign(expression.Name.Lexeme, temp)
 	return temp
 }
 
-func (interpreter *Interpreter) VisitTokenExpression(expression statement.TokenExpression) any {
+func (interpreter *interpreterImpl) VisitTokenExpression(expression statement.TokenExpression) any {
 	return expression.Name.Lexeme
 }
 
-func (interpreter *Interpreter) VisitFunctionExpression(expression statement.FunctionExpression) any {
+func (interpreter *interpreterImpl) VisitFunctionExpression(expression statement.FunctionExpression) any {
 	return call.NewFunction(expression.Body, expression.Params, interpreter.environment)
 }
 
-func (interpreter *Interpreter) VisitClassExpression(expression statement.ClassExpression) any {
+func (interpreter *interpreterImpl) VisitClassExpression(expression statement.ClassExpression) any {
 	return interpreter.getClassBody(expression.Methods)
 }
 
-func (interpreter *Interpreter) VisitArrayLiteralExpression(expression statement.ArrayLiteralExpression) any {
+func (interpreter *interpreterImpl) VisitArrayLiteralExpression(expression statement.ArrayLiteralExpression) any {
 	instance := call.NewArray()
 	for i, item := range expression.Elements {
 		value := interpreter.Evaluate(item)
@@ -582,7 +582,7 @@ func (interpreter *Interpreter) VisitArrayLiteralExpression(expression statement
 	return instance
 }
 
-func (interpreter *Interpreter) VisitObjectLiteralExpression(expression statement.ObjectLiteralExpression) any {
+func (interpreter *interpreterImpl) VisitObjectLiteralExpression(expression statement.ObjectLiteralExpression) any {
 	instance := call.NewInstance()
 	for _, item := range expression.Properties {
 		key := interpreter.Evaluate(item.Key)
@@ -592,7 +592,7 @@ func (interpreter *Interpreter) VisitObjectLiteralExpression(expression statemen
 	return instance
 }
 
-func (interpreter *Interpreter) VisitNewExpression(expression statement.NewExpression) any {
+func (interpreter *interpreterImpl) VisitNewExpression(expression statement.NewExpression) any {
 	if _, ok := expression.Expression.(statement.CallExpression); ok {
 		result := interpreter.Evaluate(expression.Expression)
 		return result

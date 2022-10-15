@@ -7,21 +7,21 @@ import (
 	"github.com/nusr/gojs/types"
 )
 
-type Function struct {
+type functionImpl struct {
 	env    types.Environment
 	body   statement.BlockStatement
 	params []token.Token
 }
 
-func NewFunction(body statement.BlockStatement, params []token.Token, env types.Environment) types.Callable {
-	return &Function{
+func NewFunction(body statement.BlockStatement, params []token.Token, env types.Environment) types.Function {
+	return &functionImpl{
 		body:   body,
 		params: params,
 		env:    env,
 	}
 }
 
-func (function *Function) Call(interpreter types.InterpreterMethods, params []any) any {
+func (function *functionImpl) Call(interpreter types.Interpreter, params []any) any {
 	env := environment.New(function.env)
 	paramsLen := len(params)
 	for i, item := range function.params {
@@ -34,6 +34,6 @@ func (function *Function) Call(interpreter types.InterpreterMethods, params []an
 	return interpreter.ExecuteBlock(function.body, env)
 }
 
-func (function *Function) String() string {
+func (function *functionImpl) String() string {
 	return ""
 }
