@@ -6,6 +6,17 @@ import (
 	"github.com/nusr/gojs/token"
 )
 
+type StatementVisitor interface {
+	VisitBlockStatement(statement BlockStatement) any
+	VisitClassStatement(statement ClassStatement) any
+	VisitExpressionStatement(statement ExpressionStatement) any
+	VisitFunctionStatement(statement FunctionStatement) any
+	VisitIfStatement(statement IfStatement) any
+	VisitReturnStatement(statement ReturnStatement) any
+	VisitVariableStatement(statement VariableStatement) any
+	VisitWhileStatement(statement WhileStatement) any
+}
+
 type Statement interface {
 	Accept(visitor StatementVisitor) any
 	String() string
@@ -24,7 +35,7 @@ func (statement BlockStatement) String() string {
 	for _, item := range statement.Statements {
 		temp = append(temp, item.String())
 	}
-	return "{" + strings.Join(temp, ";") + "}"
+	return "{" + strings.Join(temp, "") + "}"
 }
 
 type ClassStatement struct {
@@ -142,15 +153,4 @@ func (statement WhileStatement) Accept(visitor StatementVisitor) any {
 
 func (statement WhileStatement) String() string {
 	return "while(" + statement.Condition.String() + ")" + statement.Body.String()
-}
-
-type StatementVisitor interface {
-	VisitBlockStatement(statement BlockStatement) any
-	VisitClassStatement(statement ClassStatement) any
-	VisitExpressionStatement(statement ExpressionStatement) any
-	VisitFunctionStatement(statement FunctionStatement) any
-	VisitIfStatement(statement IfStatement) any
-	VisitReturnStatement(statement ReturnStatement) any
-	VisitVariableStatement(statement VariableStatement) any
-	VisitWhileStatement(statement WhileStatement) any
 }

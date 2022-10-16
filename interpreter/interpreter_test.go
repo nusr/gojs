@@ -81,8 +81,119 @@ func Test_interpret_binary(t *testing.T) {
 	}{
 		{
 			"basic",
-			"var a = 1; a += 3;a;",
+			`
+			var a = 1; 
+			a += 3;
+			a;`,
 			int64(4),
+		},
+		{
+			"NaN",
+			`
+			var a = 1 - 'test'
+			a
+			`,
+			"NaN",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			actual := interpret(tt.source)
+
+			if actual != tt.want {
+				t.Errorf("expect= %v, actual= %v", tt.want, actual)
+			}
+		})
+	}
+}
+
+func Test_interpret_logic(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		want   any
+	}{
+		{
+			"and false",
+			`
+			var a = 1
+			var b = false
+			a && b
+			`,
+			false,
+		},
+		{
+			"and false",
+			`
+			var a = 1
+			var b = true
+			a && b
+			`,
+			true,
+		},
+		{
+			"or true",
+			`
+			var a = 1
+			var b = false
+			a || b
+			`,
+			int64(1),
+		},
+		{
+			"or false",
+			`
+			var a = 0
+			var b = false
+			a || b
+			`,
+			false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			actual := interpret(tt.source)
+
+			if actual != tt.want {
+				t.Errorf("expect= %v, actual= %v", tt.want, actual)
+			}
+		})
+	}
+}
+
+func Test_interpret_control_flow(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		want   any
+	}{
+		{
+			"if true",
+			`
+			var a = 1
+			if (a) {
+				a = true
+			} else {
+				a = false
+			}
+			a
+			`,
+			true,
+		},
+		{
+			"if false",
+			`
+			var a = 0
+			if (a) {
+				a = true
+			} else {
+				a = false
+			}
+			a
+			`,
+			false,
 		},
 	}
 	for _, tt := range tests {
@@ -172,9 +283,17 @@ func Test_interpret_function(t *testing.T) {
 			function add(a, b) {
 				return a + b;
 			}
-			add(1, 2);
+			add(1, 2)
 			`,
 			int64(3),
+		},
+		{
+			"expression",
+			`var add = function(a,b){
+				return a + b;
+			}
+			add(1,3.0)`,
+			float64(4.0),
 		},
 	}
 	for _, tt := range tests {
@@ -229,6 +348,17 @@ func Test_interpret_class(t *testing.T) {
 			Base.a
 			`,
 			int64(2),
+		},
+		{
+			"expression",
+			`
+			var Base = class {
+				a = 1.0
+			}
+			var b = new Base()
+			b.a
+			`,
+			float64(1.0),
 		},
 	}
 	for _, tt := range tests {

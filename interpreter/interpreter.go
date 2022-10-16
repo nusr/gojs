@@ -13,10 +13,6 @@ import (
 	"github.com/nusr/gojs/types"
 )
 
-const (
-	nanNumber = "NaN"
-)
-
 func convertBtoF(b bool) float64 {
 	if b {
 		return float64(1)
@@ -96,8 +92,12 @@ func (interpreter *interpreterImpl) Interpret(list []statement.Statement) any {
 	for _, item := range list {
 		result = interpreter.Execute(item)
 		if val, ok := result.(flow.Return); ok {
-			return val.Value
+			result = val.Value
+			break
 		}
+	}
+	if val, ok := result.(fmt.Stringer); ok {
+		return val.String()
 	}
 	return result
 }
@@ -328,6 +328,12 @@ func (interpreter *interpreterImpl) VisitBinaryExpression(expression statement.B
 		}
 	case token.Plus:
 		{
+			if types.IsNaN(left) {
+				return left
+			}
+			if types.IsNaN(right) {
+				return right
+			}
 			_, stringType1 := left.(string)
 			_, stringType2 := right.(string)
 			if stringType1 || stringType2 {
@@ -344,10 +350,16 @@ func (interpreter *interpreterImpl) VisitBinaryExpression(expression statement.B
 		}
 	case token.Minus:
 		{
+			if types.IsNaN(left) {
+				return left
+			}
+			if types.IsNaN(right) {
+				return right
+			}
 			_, stringType1 := left.(string)
 			_, stringType2 := right.(string)
 			if stringType1 || stringType2 {
-				return nanNumber
+				return types.NaN{}
 			}
 			if a, b, check := convertLtoI(left, right); check {
 				return a - b
@@ -360,10 +372,16 @@ func (interpreter *interpreterImpl) VisitBinaryExpression(expression statement.B
 		}
 	case token.Star:
 		{
+			if types.IsNaN(left) {
+				return left
+			}
+			if types.IsNaN(right) {
+				return right
+			}
 			_, stringType1 := left.(string)
 			_, stringType2 := right.(string)
 			if stringType1 || stringType2 {
-				return nanNumber
+				return types.NaN{}
 			}
 			if a, b, check := convertLtoI(left, right); check {
 				return a * b
@@ -376,10 +394,16 @@ func (interpreter *interpreterImpl) VisitBinaryExpression(expression statement.B
 		}
 	case token.Slash:
 		{
+			if types.IsNaN(left) {
+				return left
+			}
+			if types.IsNaN(right) {
+				return right
+			}
 			_, stringType1 := left.(string)
 			_, stringType2 := right.(string)
 			if stringType1 || stringType2 {
-				return nanNumber
+				return types.NaN{}
 			}
 			if a, b, check := convertLtoI(left, right); check {
 				return a / b
@@ -395,10 +419,16 @@ func (interpreter *interpreterImpl) VisitBinaryExpression(expression statement.B
 		}
 	case token.Percent:
 		{
+			if types.IsNaN(left) {
+				return left
+			}
+			if types.IsNaN(right) {
+				return right
+			}
 			_, stringType1 := left.(string)
 			_, stringType2 := right.(string)
 			if stringType1 || stringType2 {
-				return nanNumber
+				return types.NaN{}
 			}
 			if a, b, check := convertLtoI(left, right); check {
 				return a % b
@@ -414,7 +444,7 @@ func (interpreter *interpreterImpl) VisitBinaryExpression(expression statement.B
 			_, stringType1 := left.(string)
 			_, stringType2 := right.(string)
 			if stringType1 || stringType2 {
-				return nanNumber
+				return types.NaN{}
 			}
 			if a, b, check := convertLtoI(left, right); check {
 				return math.Pow(float64(a), float64(b))
@@ -547,7 +577,7 @@ func (interpreter *interpreterImpl) VisitUnaryExpression(expression statement.Un
 			if val, ok := result.(float64); ok {
 				return -val
 			}
-			return nanNumber
+			return types.NaN{}
 		}
 	case token.Bang:
 		return !interpreter.isTruth(result)

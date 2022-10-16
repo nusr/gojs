@@ -6,6 +6,27 @@ import (
 	"github.com/nusr/gojs/token"
 )
 
+type ExpressionVisitor interface {
+	VisitAssignExpression(expression AssignExpression) any
+	VisitBinaryExpression(expression BinaryExpression) any
+	VisitCallExpression(expression CallExpression) any
+	VisitGetExpression(expression GetExpression) any
+	VisitSetExpression(expression SetExpression) any
+	VisitGroupingExpression(expression GroupingExpression) any
+	VisitLiteralExpression(expression LiteralExpression) any
+	VisitLogicalExpression(expression LogicalExpression) any
+	VisitSuperExpression(expression SuperExpression) any
+	VisitThisExpression(expression ThisExpression) any
+	VisitUnaryExpression(expression UnaryExpression) any
+	VisitVariableExpression(expression VariableExpression) any
+	VisitTokenExpression(expression TokenExpression) any
+	VisitFunctionExpression(expression FunctionExpression) any
+	VisitClassExpression(expression ClassExpression) any
+	VisitArrayLiteralExpression(expression ArrayLiteralExpression) any
+	VisitObjectLiteralExpression(expression ObjectLiteralExpression) any
+	VisitNewExpression(expression NewExpression) any
+}
+
 type Expression interface {
 	Accept(visitor ExpressionVisitor) (result any)
 	String() string
@@ -277,25 +298,4 @@ func (expression NewExpression) Accept(visitor ExpressionVisitor) any {
 
 func (expression NewExpression) String() string {
 	return "new " + expression.Expression.String()
-}
-
-type ExpressionVisitor interface {
-	VisitAssignExpression(expression AssignExpression) any
-	VisitBinaryExpression(expression BinaryExpression) any
-	VisitCallExpression(expression CallExpression) any
-	VisitGetExpression(expression GetExpression) any
-	VisitSetExpression(expression SetExpression) any
-	VisitGroupingExpression(expression GroupingExpression) any
-	VisitLiteralExpression(expression LiteralExpression) any
-	VisitLogicalExpression(expression LogicalExpression) any
-	VisitSuperExpression(expression SuperExpression) any
-	VisitThisExpression(expression ThisExpression) any
-	VisitUnaryExpression(expression UnaryExpression) any
-	VisitVariableExpression(expression VariableExpression) any
-	VisitTokenExpression(expression TokenExpression) any
-	VisitFunctionExpression(expression FunctionExpression) any
-	VisitClassExpression(expression ClassExpression) any
-	VisitArrayLiteralExpression(expression ArrayLiteralExpression) any
-	VisitObjectLiteralExpression(expression ObjectLiteralExpression) any
-	VisitNewExpression(expression NewExpression) any
 }
