@@ -59,6 +59,10 @@ func TestFunction(t *testing.T) {
 		}
 	}
 
+	1^2
+	1&2
+	1|2
+
 	`
 	s := scanner.New(source)
 	tokens := s.Scan()
@@ -83,6 +87,9 @@ func TestFunction(t *testing.T) {
 		"b=1;",
 		"var i=1;",
 		"while(i<10){if(!i){b=b+i;}}",
+		"1^2;",
+		"1&2;",
+		"1|2;",
 	}
 	for i, item := range list {
 		if item.String() != expects[i] {

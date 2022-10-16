@@ -455,6 +455,54 @@ func (interpreter *interpreterImpl) VisitBinaryExpression(expression statement.B
 			}
 			return math.Pow(a, b)
 		}
+	case token.BitAnd:
+		{
+			_, stringType1 := left.(string)
+			_, stringType2 := right.(string)
+			if stringType1 || stringType2 {
+				return types.NaN{}
+			}
+			if a, b, check := convertLtoI(left, right); check {
+				return a & b
+			}
+			a, b, check := convertLtoF(left, right)
+			if !check {
+				panic(any(fmt.Sprintf("BitAnd can not handle value left:%v,right:%v", left, right)))
+			}
+			return int64(a) & int64(b)
+		}
+	case token.BitOr:
+		{
+			_, stringType1 := left.(string)
+			_, stringType2 := right.(string)
+			if stringType1 || stringType2 {
+				return types.NaN{}
+			}
+			if a, b, check := convertLtoI(left, right); check {
+				return a | b
+			}
+			a, b, check := convertLtoF(left, right)
+			if !check {
+				panic(any(fmt.Sprintf("BitOr can not handle value left:%v,right:%v", left, right)))
+			}
+			return int64(a) | int64(b)
+		}
+	case token.BitXOr:
+		{
+			_, stringType1 := left.(string)
+			_, stringType2 := right.(string)
+			if stringType1 || stringType2 {
+				return types.NaN{}
+			}
+			if a, b, check := convertLtoI(left, right); check {
+				return a ^ b
+			}
+			a, b, check := convertLtoF(left, right)
+			if !check {
+				panic(any(fmt.Sprintf("BitXOr can not handle value left:%v,right:%v", left, right)))
+			}
+			return int64(a) ^ int64(b)
+		}
 	}
 	return nil
 }

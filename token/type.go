@@ -60,6 +60,8 @@ const (
 	Or
 	OrEqual     // ||=
 	BitAnd      // &
+	BitXOr      // ^
+	BitXOrEqual // ^=
 	BitAndEqual // &=
 	BitOr       // |
 	BitOrEqual  // |=

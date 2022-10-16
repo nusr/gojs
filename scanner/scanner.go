@@ -194,6 +194,12 @@ func (scanner *Scanner) scanToken() {
 		scanner.addToken(token.Semicolon)
 	case ':':
 		scanner.addToken(token.Colon)
+	case '^':
+		if scanner.match('=') {
+			scanner.addToken(token.BitXOrEqual)
+		} else {
+			scanner.addToken(token.BitXOr)
+		}
 	case '%':
 		if scanner.match('=') {
 			scanner.addToken(token.PercentEqual)

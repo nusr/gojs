@@ -18,6 +18,7 @@ var assignmentMap = map[token.Type]token.Type{
 	token.SlashEqual:    token.Slash,
 	token.PercentEqual:  token.Percent,
 	token.BitAndEqual:   token.BitAnd,
+	token.BitXOrEqual:   token.BitXOr,
 	token.BitOrEqual:    token.BitOr,
 	token.AndEqual:      token.And,
 	token.OrEqual:       token.Or,
@@ -316,8 +317,50 @@ func (parser *Parser) equality() statement.Expression {
 	return expr
 }
 
-func (parser *Parser) and() statement.Expression {
+func (parser *Parser) bitAnd() statement.Expression {
 	expr := parser.equality()
+	for parser.match(token.BitAnd) {
+		operator := parser.previous()
+		right := parser.bitAnd()
+		expr = statement.BinaryExpression{
+			Left:     expr,
+			Operator: operator,
+			Right:    right,
+		}
+	}
+	return expr
+}
+
+func (parser *Parser) bitXOr() statement.Expression {
+	expr := parser.bitAnd()
+	for parser.match(token.BitXOr) {
+		operator := parser.previous()
+		right := parser.bitXOr()
+		expr = statement.BinaryExpression{
+			Left:     expr,
+			Operator: operator,
+			Right:    right,
+		}
+	}
+	return expr
+}
+
+func (parser *Parser) bitOr() statement.Expression {
+	expr := parser.bitXOr()
+	for parser.match(token.BitOr) {
+		operator := parser.previous()
+		right := parser.bitOr()
+		expr = statement.BinaryExpression{
+			Left:     expr,
+			Operator: operator,
+			Right:    right,
+		}
+	}
+	return expr
+}
+
+func (parser *Parser) and() statement.Expression {
+	expr := parser.bitOr()
 	for parser.match(token.And) {
 		operator := parser.previous()
 		right := parser.and()
