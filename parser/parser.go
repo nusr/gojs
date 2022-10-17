@@ -11,17 +11,20 @@ import (
 const maxParameterCount = 255
 
 var assignmentMap = map[token.Type]token.Type{
-	token.PlusEqual:     token.Plus,
-	token.MinusEqual:    token.Minus,
-	token.StarStarEqual: token.StarStar,
-	token.StarEqual:     token.Equal,
-	token.SlashEqual:    token.Slash,
-	token.PercentEqual:  token.Percent,
-	token.BitAndEqual:   token.BitAnd,
-	token.BitXOrEqual:   token.BitXOr,
-	token.BitOrEqual:    token.BitOr,
-	token.AndEqual:      token.And,
-	token.OrEqual:       token.Or,
+	token.PlusEqual:                  token.Plus,
+	token.MinusEqual:                 token.Minus,
+	token.StarStarEqual:              token.StarStar,
+	token.StarEqual:                  token.Equal,
+	token.SlashEqual:                 token.Slash,
+	token.PercentEqual:               token.Percent,
+	token.BitLeftShiftEqual:          token.BitLeftShift,
+	token.BitRightShiftEqual:         token.BitRightShift,
+	token.BitUnsignedRightShiftEqual: token.BitUnsignedRightShift,
+	token.BitAndEqual:                token.BitAnd,
+	token.BitXOrEqual:                token.BitXOr,
+	token.BitOrEqual:                 token.BitOr,
+	token.AndEqual:                   token.And,
+	token.OrEqual:                    token.Or,
 }
 
 type Parser struct {
@@ -250,7 +253,7 @@ func (parser *Parser) new() statement.Expression {
 }
 
 func (parser *Parser) unary() statement.Expression {
-	if parser.match(token.Minus, token.Plus, token.Bang, token.MinusMinus, token.PlusPlus) {
+	if parser.match(token.Minus, token.Plus, token.Bang, token.MinusMinus, token.PlusPlus, token.BitNot) {
 		operator := parser.previous()
 		value := parser.unary()
 		return statement.UnaryExpression{
@@ -259,13 +262,27 @@ func (parser *Parser) unary() statement.Expression {
 		}
 	}
 	return parser.new()
-
 }
+
+func (parser *Parser) exponentiation() statement.Expression {
+	expo := parser.unary()
+	for parser.match(token.StarStar) {
+		operator := parser.previous()
+		right := parser.exponentiation()
+		expo = statement.BinaryExpression{
+			Left:     expo,
+			Operator: operator,
+			Right:    right,
+		}
+	}
+	return expo
+}
+
 func (parser *Parser) factor() statement.Expression {
-	unary := parser.unary()
+	unary := parser.exponentiation()
 	for parser.match(token.Star, token.Slash) {
 		operator := parser.previous()
-		right := parser.unary()
+		right := parser.exponentiation()
 		unary = statement.BinaryExpression{
 			Left:     unary,
 			Operator: operator,
@@ -289,11 +306,25 @@ func (parser *Parser) term() statement.Expression {
 	return factor
 }
 
-func (parser *Parser) comparison() statement.Expression {
+func (parser *Parser) bitShift() statement.Expression {
 	term := parser.term()
-	for parser.match(token.Greater, token.GreaterEqual, token.Less, token.LessEqual) {
+	for parser.match(token.BitLeftShift, token.BitRightShift, token.BitUnsignedRightShift) {
 		operator := parser.previous()
 		right := parser.term()
+		term = statement.BinaryExpression{
+			Left:     term,
+			Operator: operator,
+			Right:    right,
+		}
+	}
+	return term
+}
+
+func (parser *Parser) comparison() statement.Expression {
+	term := parser.bitShift()
+	for parser.match(token.Greater, token.GreaterEqual, token.Less, token.LessEqual) {
+		operator := parser.previous()
+		right := parser.bitShift()
 		term = statement.BinaryExpression{
 			Left:     term,
 			Operator: operator,

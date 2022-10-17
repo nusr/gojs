@@ -208,6 +208,8 @@ func (scanner *Scanner) scanToken() {
 		}
 	case '?':
 		scanner.addToken(token.Mark)
+	case '~':
+		scanner.addToken(token.BitNot)
 	case '&':
 		if scanner.match('&') {
 			if scanner.match('=') {
@@ -267,12 +269,30 @@ func (scanner *Scanner) scanToken() {
 	case '>':
 		if scanner.match('=') {
 			scanner.addToken(token.GreaterEqual)
+		} else if scanner.match('>') {
+			if scanner.match('>') {
+				if scanner.match('=') {
+					scanner.addToken(token.BitUnsignedRightShiftEqual)
+				} else {
+					scanner.addToken(token.BitUnsignedRightShift)
+				}
+			} else if scanner.match('=') {
+				scanner.addToken(token.BitRightShiftEqual)
+			} else {
+				scanner.addToken(token.BitRightShift)
+			}
 		} else {
 			scanner.addToken(token.Greater)
 		}
 	case '<':
 		if scanner.match('=') {
 			scanner.addToken(token.LessEqual)
+		} else if scanner.match('<') {
+			if scanner.match('=') {
+				scanner.addToken(token.BitLeftShiftEqual)
+			} else {
+				scanner.addToken(token.BitLeftShift)
+			}
 		} else {
 			scanner.addToken(token.Less)
 		}

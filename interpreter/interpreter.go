@@ -96,9 +96,6 @@ func (interpreter *interpreterImpl) Interpret(list []statement.Statement) any {
 			break
 		}
 	}
-	if val, ok := result.(fmt.Stringer); ok {
-		return val.String()
-	}
 	return result
 }
 
@@ -503,6 +500,54 @@ func (interpreter *interpreterImpl) VisitBinaryExpression(expression statement.B
 			}
 			return int64(a) ^ int64(b)
 		}
+	case token.BitLeftShift:
+		{
+			_, stringType1 := left.(string)
+			_, stringType2 := right.(string)
+			if stringType1 || stringType2 {
+				return types.NaN{}
+			}
+			if a, b, check := convertLtoI(left, right); check {
+				return a << b
+			}
+			a, b, check := convertLtoF(left, right)
+			if !check {
+				panic(any(fmt.Sprintf("BitLeftShift can not handle value left:%v,right:%v", left, right)))
+			}
+			return int64(a) << int64(b)
+		}
+	case token.BitRightShift:
+		{
+			_, stringType1 := left.(string)
+			_, stringType2 := right.(string)
+			if stringType1 || stringType2 {
+				return types.NaN{}
+			}
+			if a, b, check := convertLtoI(left, right); check {
+				return a >> b
+			}
+			a, b, check := convertLtoF(left, right)
+			if !check {
+				panic(any(fmt.Sprintf("BitRightShift can not handle value left:%v,right:%v", left, right)))
+			}
+			return int64(a) >> int64(b)
+		}
+	case token.BitUnsignedRightShift:
+		{
+			_, stringType1 := left.(string)
+			_, stringType2 := right.(string)
+			if stringType1 || stringType2 {
+				return types.NaN{}
+			}
+			if a, b, check := convertLtoI(left, right); check {
+				return a >> b
+			}
+			a, b, check := convertLtoF(left, right)
+			if !check {
+				panic(any(fmt.Sprintf("BitUnsignedRightShift can not handle value left:%v,right:%v", left, right)))
+			}
+			return int64(a) >> int64(b)
+		}
 	}
 	return nil
 }
@@ -587,7 +632,7 @@ func (interpreter *interpreterImpl) VisitUnaryExpression(expression statement.Un
 				if check {
 					temp = a + 1
 				} else {
-					panic(any("error type"))
+					panic(any("PlusPlus error type"))
 				}
 			}
 			interpreter.environment.Assign(expression.Right.String(), temp)
@@ -605,7 +650,7 @@ func (interpreter *interpreterImpl) VisitUnaryExpression(expression statement.Un
 				if check {
 					temp = a - 1
 				} else {
-					panic(any("error type"))
+					panic(any("MinusMinus error type"))
 				}
 			}
 			interpreter.environment.Assign(expression.Right.String(), temp)
@@ -629,6 +674,21 @@ func (interpreter *interpreterImpl) VisitUnaryExpression(expression statement.Un
 		}
 	case token.Bang:
 		return !interpreter.isTruth(result)
+	case token.BitNot:
+		{
+			var temp int64
+			if val, check := result.(int64); check {
+				temp = ^val
+			} else {
+				a, _, check := convertLtoF(result, float64(0))
+				if check {
+					temp = ^int64(a)
+				} else {
+					panic(any("BitNot error type"))
+				}
+			}
+			return temp
+		}
 	}
 	return nil
 }

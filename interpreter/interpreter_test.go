@@ -1,6 +1,7 @@
 package interpreter
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/nusr/gojs/environment"
@@ -16,6 +17,9 @@ func interpret(source string) any {
 	statements := p.Parse()
 	i := New(env)
 	actual := i.Interpret(statements)
+	if val, ok := actual.(fmt.Stringer); ok {
+		return val.String()
+	}
 	return actual
 }
 
@@ -101,6 +105,72 @@ func Test_interpret_binary(t *testing.T) {
 
 			actual := interpret(tt.source)
 
+			if actual != tt.want {
+				t.Errorf("expect= %v, actual= %v", tt.want, actual)
+			}
+		})
+	}
+}
+func Test_interpret_exponentiation(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		want   any
+	}{
+		{
+			"4**2**3",
+			"4**2**3",
+			float64(65536),
+		},
+		{
+
+			"(4**2)**3",
+			"(4**2)**3",
+			float64(4096),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			actual := interpret(tt.source)
+
+			if actual != tt.want {
+				t.Errorf("expect= %v, actual= %v", tt.want, actual)
+			}
+		})
+	}
+}
+
+func Test_interpret_bitwise(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		want   any
+	}{
+		{
+			"or",
+			"1 | 2",
+			int64(3),
+		},
+		{
+			"and",
+			"1 & 2",
+			int64(0),
+		},
+		{
+			"xor",
+			"1 ^ 2",
+			int64(3),
+		},
+		{
+			"not",
+			"~2.0",
+			int64(-3),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := interpret(tt.source)
 			if actual != tt.want {
 				t.Errorf("expect= %v, actual= %v", tt.want, actual)
 			}

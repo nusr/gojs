@@ -58,13 +58,20 @@ const (
 	If
 	Null // null
 	Or
-	OrEqual     // ||=
-	BitAnd      // &
-	BitXOr      // ^
-	BitXOrEqual // ^=
-	BitAndEqual // &=
-	BitOr       // |
-	BitOrEqual  // |=
+	OrEqual                    // ||=
+	BitAnd                     // &
+	BitXOr                     // ^
+	BitXOrEqual                // ^=
+	BitAndEqual                // &=
+	BitOr                      // |
+	BitOrEqual                 // |=
+	BitNot                     // ~
+	BitLeftShift               // <<
+	BitLeftShiftEqual          // <<=
+	BitRightShift              // >>
+	BitRightShiftEqual         // >>=
+	BitUnsignedRightShift      // >>>
+	BitUnsignedRightShiftEqual // >>>=
 	Return
 	Super
 	This
