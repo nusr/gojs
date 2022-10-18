@@ -1,5 +1,8 @@
 # Golang interpret JavaScript.
 
+[![ci status](https://github.com/nusr/gojs/actions/workflows/ci.yml/badge.svg)](https://github.com/nusr/gojs/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/nusr/gojs/branch/main/graph/badge.svg?token=tNKcOjlxLo)](https://codecov.io/gh/nusr/gojs)
+
 Zero dependencies.
 
 ## Lint
