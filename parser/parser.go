@@ -179,7 +179,7 @@ func (parser *Parser) primary() statement.Expression {
 			Methods: methods,
 		}
 	}
-	panic(any(fmt.Sprintf("parser can not handle token: %s", parser.peek())))
+	panic(fmt.Sprintf("parser can not handle token: %s", parser.peek()))
 }
 func (parser *Parser) getExpressionList(tokenType token.Type) []statement.Expression {
 	var params []statement.Expression
@@ -199,7 +199,7 @@ func (parser *Parser) getExpressionList(tokenType token.Type) []statement.Expres
 		if tokenType == token.RightParen {
 			count++
 			if count > maxParameterCount {
-				panic(any("over max parameter count"))
+				panic("over max parameter count")
 			}
 		}
 	}
@@ -456,7 +456,7 @@ func (parser *Parser) assignment() statement.Expression {
 				Value:  value,
 			}
 		}
-		panic(any(fmt.Sprintf("invalid assign target: %s", equal)))
+		panic(fmt.Sprintf("invalid assign target: %s", equal))
 	}
 	return expr
 }

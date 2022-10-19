@@ -2,6 +2,8 @@ build:
 	go build
 test: 
 	go test ./...
+test-js:
+	go build && ./gojs testData.js
 lint:
 	go vet ./... && go fmt ./... && go mod tidy
 coverage: 

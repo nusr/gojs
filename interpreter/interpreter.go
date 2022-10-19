@@ -280,7 +280,7 @@ func (interpreter *interpreterImpl) VisitBinaryExpression(expression statement.B
 			}
 			a, b, check := convertLtoF(left, right)
 			if !check {
-				panic(any(fmt.Sprintf("LESS can not handle value left:%v,right:%v", left, right)))
+				panic(fmt.Sprintf("LESS can not handle value left:%v,right:%v", left, right))
 			}
 			return a < b
 		}
@@ -293,7 +293,7 @@ func (interpreter *interpreterImpl) VisitBinaryExpression(expression statement.B
 			}
 			a, b, check := convertLtoF(left, right)
 			if !check {
-				panic(any(fmt.Sprintf("LESS_EQUAL can not handle value left:%v,right:%v", left, right)))
+				panic(fmt.Sprintf("LESS_EQUAL can not handle value left:%v,right:%v", left, right))
 			}
 			return a <= b
 		}
@@ -306,7 +306,7 @@ func (interpreter *interpreterImpl) VisitBinaryExpression(expression statement.B
 			}
 			a, b, check := convertLtoF(left, right)
 			if !check {
-				panic(any(fmt.Sprintf("GREATER can not handle value left:%v,right:%v", left, right)))
+				panic(fmt.Sprintf("GREATER can not handle value left:%v,right:%v", left, right))
 			}
 			return a > b
 		}
@@ -319,7 +319,7 @@ func (interpreter *interpreterImpl) VisitBinaryExpression(expression statement.B
 			}
 			a, b, check := convertLtoF(left, right)
 			if !check {
-				panic(any(fmt.Sprintf("GREATER_EQUAL can not handle value left:%v,right:%v", left, right)))
+				panic(fmt.Sprintf("GREATER_EQUAL can not handle value left:%v,right:%v", left, right))
 			}
 			return a >= b
 		}
@@ -341,7 +341,7 @@ func (interpreter *interpreterImpl) VisitBinaryExpression(expression statement.B
 			}
 			a, b, check := convertLtoF(left, right)
 			if !check {
-				panic(any(fmt.Sprintf("PLUS can not handle value left:%v,right:%v", left, right)))
+				panic(fmt.Sprintf("PLUS can not handle value left:%v,right:%v", left, right))
 			}
 			return a + b
 		}
@@ -363,7 +363,7 @@ func (interpreter *interpreterImpl) VisitBinaryExpression(expression statement.B
 			}
 			a, b, check := convertLtoF(left, right)
 			if !check {
-				panic(any(fmt.Sprintf("MINUS can not handle value left:%v,right:%v", left, right)))
+				panic(fmt.Sprintf("MINUS can not handle value left:%v,right:%v", left, right))
 			}
 			return a - b
 		}
@@ -385,7 +385,7 @@ func (interpreter *interpreterImpl) VisitBinaryExpression(expression statement.B
 			}
 			a, b, check := convertLtoF(left, right)
 			if !check {
-				panic(any(fmt.Sprintf("STAR can not handle value left:%v,right:%v", left, right)))
+				panic(fmt.Sprintf("STAR can not handle value left:%v,right:%v", left, right))
 			}
 			return a * b
 		}
@@ -407,7 +407,7 @@ func (interpreter *interpreterImpl) VisitBinaryExpression(expression statement.B
 			}
 			a, b, check := convertLtoF(left, right)
 			if !check {
-				panic(any(fmt.Sprintf("STAR can not handle value left:%v,right:%v", left, right)))
+				panic(fmt.Sprintf("STAR can not handle value left:%v,right:%v", left, right))
 			}
 			if b == 0 {
 				return math.MaxFloat64
@@ -432,7 +432,7 @@ func (interpreter *interpreterImpl) VisitBinaryExpression(expression statement.B
 			}
 			a, b, check := convertLtoF(left, right)
 			if !check {
-				panic(any(fmt.Sprintf("Percent can not handle value left:%v,right:%v", left, right)))
+				panic(fmt.Sprintf("Percent can not handle value left:%v,right:%v", left, right))
 			}
 			return int64(a) % int64(b)
 		}
@@ -448,7 +448,7 @@ func (interpreter *interpreterImpl) VisitBinaryExpression(expression statement.B
 			}
 			a, b, check := convertLtoF(left, right)
 			if !check {
-				panic(any(fmt.Sprintf("StarStar can not handle value left:%v,right:%v", left, right)))
+				panic(fmt.Sprintf("StarStar can not handle value left:%v,right:%v", left, right))
 			}
 			return math.Pow(a, b)
 		}
@@ -464,7 +464,7 @@ func (interpreter *interpreterImpl) VisitBinaryExpression(expression statement.B
 			}
 			a, b, check := convertLtoF(left, right)
 			if !check {
-				panic(any(fmt.Sprintf("BitAnd can not handle value left:%v,right:%v", left, right)))
+				panic(fmt.Sprintf("BitAnd can not handle value left:%v,right:%v", left, right))
 			}
 			return int64(a) & int64(b)
 		}
@@ -480,7 +480,7 @@ func (interpreter *interpreterImpl) VisitBinaryExpression(expression statement.B
 			}
 			a, b, check := convertLtoF(left, right)
 			if !check {
-				panic(any(fmt.Sprintf("BitOr can not handle value left:%v,right:%v", left, right)))
+				panic(fmt.Sprintf("BitOr can not handle value left:%v,right:%v", left, right))
 			}
 			return int64(a) | int64(b)
 		}
@@ -496,7 +496,7 @@ func (interpreter *interpreterImpl) VisitBinaryExpression(expression statement.B
 			}
 			a, b, check := convertLtoF(left, right)
 			if !check {
-				panic(any(fmt.Sprintf("BitXOr can not handle value left:%v,right:%v", left, right)))
+				panic(fmt.Sprintf("BitXOr can not handle value left:%v,right:%v", left, right))
 			}
 			return int64(a) ^ int64(b)
 		}
@@ -512,7 +512,7 @@ func (interpreter *interpreterImpl) VisitBinaryExpression(expression statement.B
 			}
 			a, b, check := convertLtoF(left, right)
 			if !check {
-				panic(any(fmt.Sprintf("BitLeftShift can not handle value left:%v,right:%v", left, right)))
+				panic(fmt.Sprintf("BitLeftShift can not handle value left:%v,right:%v", left, right))
 			}
 			return int64(a) << int64(b)
 		}
@@ -528,7 +528,7 @@ func (interpreter *interpreterImpl) VisitBinaryExpression(expression statement.B
 			}
 			a, b, check := convertLtoF(left, right)
 			if !check {
-				panic(any(fmt.Sprintf("BitRightShift can not handle value left:%v,right:%v", left, right)))
+				panic(fmt.Sprintf("BitRightShift can not handle value left:%v,right:%v", left, right))
 			}
 			return int64(a) >> int64(b)
 		}
@@ -544,7 +544,7 @@ func (interpreter *interpreterImpl) VisitBinaryExpression(expression statement.B
 			}
 			a, b, check := convertLtoF(left, right)
 			if !check {
-				panic(any(fmt.Sprintf("BitUnsignedRightShift can not handle value left:%v,right:%v", left, right)))
+				panic(fmt.Sprintf("BitUnsignedRightShift can not handle value left:%v,right:%v", left, right))
 			}
 			return int64(a) >> int64(b)
 		}
@@ -559,11 +559,10 @@ func (interpreter *interpreterImpl) VisitCallExpression(expression statement.Cal
 		params = append(params, interpreter.Evaluate(item))
 	}
 	val, ok := callable.(types.Function)
-	fmt.Printf("Type of %v is %T, bool: %v", callable, callable, ok)
 	if ok {
 		return val.Call(interpreter, params)
 	}
-	panic(any("can only call function and call"))
+	panic("can only call function and call")
 }
 func (interpreter *interpreterImpl) VisitGetExpression(expression statement.GetExpression) any {
 	result := interpreter.Evaluate(expression.Object)
@@ -632,7 +631,7 @@ func (interpreter *interpreterImpl) VisitUnaryExpression(expression statement.Un
 				if check {
 					temp = a + 1
 				} else {
-					panic(any("PlusPlus error type"))
+					panic("PlusPlus error type")
 				}
 			}
 			interpreter.environment.Assign(expression.Right.String(), temp)
@@ -650,7 +649,7 @@ func (interpreter *interpreterImpl) VisitUnaryExpression(expression statement.Un
 				if check {
 					temp = a - 1
 				} else {
-					panic(any("MinusMinus error type"))
+					panic("MinusMinus error type")
 				}
 			}
 			interpreter.environment.Assign(expression.Right.String(), temp)
@@ -684,7 +683,7 @@ func (interpreter *interpreterImpl) VisitUnaryExpression(expression statement.Un
 				if check {
 					temp = ^int64(a)
 				} else {
-					panic(any("BitNot error type"))
+					panic("BitNot error type")
 				}
 			}
 			return temp
