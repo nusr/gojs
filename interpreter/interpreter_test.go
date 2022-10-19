@@ -4,19 +4,14 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/nusr/gojs/call"
 	"github.com/nusr/gojs/environment"
-	"github.com/nusr/gojs/parser"
-	"github.com/nusr/gojs/scanner"
 )
 
 func interpret(source string) any {
 	env := environment.New(nil)
-	s := scanner.New(source)
-	tokens := s.Scan()
-	p := parser.New(tokens)
-	statements := p.Parse()
-	i := New(env)
-	actual := i.Interpret(statements)
+	call.RegisterGlobal(env)
+	actual := Interpret(source, env)
 	if val, ok := actual.(fmt.Stringer); ok {
 		return val.String()
 	}
