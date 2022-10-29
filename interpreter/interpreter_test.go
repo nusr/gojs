@@ -228,6 +228,67 @@ func Test_interpret_logic(t *testing.T) {
 	}
 }
 
+func Test_interpret_unary(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		want   any
+	}{
+		// {
+		// "unary ++",
+		// `
+		// var a = 1;
+		// ++a
+		// `,
+		// int64(2),
+		// },
+
+		// {
+		// "unary --",
+		// `
+		// var a = 4;
+		// --a
+		// `,
+		// int64(3),
+		// },
+		{
+			"post unary ++",
+			`
+			var a = 1;
+			a++;
+			`,
+			int64(1),
+		},
+		// {
+		// "post unary --",
+		// `
+		// var a = 4;
+		// a--
+		// `,
+		// int64(4),
+		// },
+		// {
+		// "post unary -- 2",
+		// `
+		// var a = 4;
+		// a--
+		// a
+		// `,
+		// int64(3),
+		// },
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			actual := interpret(tt.source)
+
+			if actual != tt.want {
+				t.Errorf("expect= %v, actual= %v", tt.want, actual)
+			}
+		})
+	}
+}
+
 func Test_interpret_control_flow(t *testing.T) {
 	tests := []struct {
 		name   string

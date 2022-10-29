@@ -602,20 +602,11 @@ func (interpreter *interpreterImpl) VisitLogicalExpression(expression statement.
 	return interpreter.Evaluate(expression.Right)
 }
 
-func (interpreter *interpreterImpl) VisitSuperExpression(expression statement.SuperExpression) any {
-	// TODO
-	return nil
-}
-
 func (interpreter *interpreterImpl) VisitGroupingExpression(expression statement.GroupingExpression) any {
 	result := interpreter.Evaluate(expression.Expression)
 	return result
 }
 
-func (interpreter *interpreterImpl) VisitThisExpression(expression statement.ThisExpression) any {
-	// TODO
-	return nil
-}
 func (interpreter *interpreterImpl) VisitUnaryExpression(expression statement.UnaryExpression) any {
 	result := interpreter.Evaluate(expression.Right)
 	switch expression.Operator.Type {
@@ -687,6 +678,45 @@ func (interpreter *interpreterImpl) VisitUnaryExpression(expression statement.Un
 				}
 			}
 			return temp
+		}
+	}
+	return nil
+}
+
+func (interpreter *interpreterImpl) VisitPostUnaryExpression(expression statement.PostUnaryExpression) any {
+	result := interpreter.Evaluate(expression.Left)
+	switch expression.Operator.Type {
+	case token.PlusPlus:
+		{
+			var temp any
+			if val, check := result.(int64); check {
+				temp = val + 1
+			} else {
+				a, _, check := convertLtoF(result, 0)
+				if check {
+					temp = a + 1
+				} else {
+					panic("post PlusPlus error type")
+				}
+			}
+			interpreter.environment.Assign(expression.Left.String(), temp)
+			return result
+		}
+	case token.MinusMinus:
+		{
+			var temp any
+			if val, check := result.(int64); check {
+				temp = val - 1
+			} else {
+				a, _, check := convertLtoF(result, 0)
+				if check {
+					temp = a - 1
+				} else {
+					panic("post MinusMinus error type")
+				}
+			}
+			interpreter.environment.Assign(expression.Left.String(), temp)
+			return result
 		}
 	}
 	return nil

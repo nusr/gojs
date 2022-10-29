@@ -252,6 +252,18 @@ func (parser *Parser) new() statement.Expression {
 	return parser.call()
 }
 
+func (parser *Parser) postUnary() statement.Expression {
+	expr := parser.new()
+	if parser.match(token.PlusPlus, token.MinusMinus) {
+		operator := parser.previous()
+		return statement.PostUnaryExpression{
+			Operator: operator,
+			Left:     expr,
+		}
+	}
+	return expr
+}
+
 func (parser *Parser) unary() statement.Expression {
 	if parser.match(token.Minus, token.Plus, token.Bang, token.MinusMinus, token.PlusPlus, token.BitNot) {
 		operator := parser.previous()
@@ -261,7 +273,7 @@ func (parser *Parser) unary() statement.Expression {
 			Right:    value,
 		}
 	}
-	return parser.new()
+	return parser.postUnary()
 }
 
 func (parser *Parser) exponentiation() statement.Expression {
@@ -336,7 +348,7 @@ func (parser *Parser) comparison() statement.Expression {
 
 func (parser *Parser) equality() statement.Expression {
 	expr := parser.comparison()
-	for parser.match(token.BangEqual, token.EqualEqual) {
+	for parser.match(token.BangEqual, token.EqualEqual, token.EqualEqualEqual, token.BangEqualEqual) {
 		operator := parser.previous()
 		right := parser.comparison()
 		expr = statement.BinaryExpression{

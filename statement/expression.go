@@ -15,9 +15,8 @@ type ExpressionVisitor interface {
 	VisitGroupingExpression(expression GroupingExpression) any
 	VisitLiteralExpression(expression LiteralExpression) any
 	VisitLogicalExpression(expression LogicalExpression) any
-	VisitSuperExpression(expression SuperExpression) any
-	VisitThisExpression(expression ThisExpression) any
 	VisitUnaryExpression(expression UnaryExpression) any
+	VisitPostUnaryExpression(expression PostUnaryExpression) any
 	VisitVariableExpression(expression VariableExpression) any
 	VisitTokenExpression(expression TokenExpression) any
 	VisitFunctionExpression(expression FunctionExpression) any
@@ -143,30 +142,7 @@ func (expression LogicalExpression) Accept(visitor ExpressionVisitor) any {
 
 func (expression LogicalExpression) String() string {
 	return expression.Left.String() + expression.Operator.String() + expression.Right.String()
-}
 
-type SuperExpression struct {
-	Arguments []Expression
-}
-
-func (expression SuperExpression) Accept(visitor ExpressionVisitor) any {
-	return visitor.VisitSuperExpression(expression)
-}
-
-func (expression SuperExpression) String() string {
-	return ""
-}
-
-type ThisExpression struct {
-	Keyword token.Token
-}
-
-func (expression ThisExpression) Accept(visitor ExpressionVisitor) any {
-	return visitor.VisitThisExpression(expression)
-}
-
-func (expression ThisExpression) String() string {
-	return ""
 }
 
 type UnaryExpression struct {
@@ -180,6 +156,19 @@ func (expression UnaryExpression) Accept(visitor ExpressionVisitor) any {
 
 func (expression UnaryExpression) String() string {
 	return expression.Operator.String() + expression.Right.String()
+}
+
+type PostUnaryExpression struct {
+	Operator token.Token
+	Left     Expression
+}
+
+func (expression PostUnaryExpression) Accept(visitor ExpressionVisitor) any {
+	return visitor.VisitPostUnaryExpression(expression)
+}
+
+func (expression PostUnaryExpression) String() string {
+	return expression.Left.String() + expression.Operator.String()
 }
 
 type VariableExpression struct {
